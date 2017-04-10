@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func checkBeatmapLink(s *discordgo.Session, m *discordgo.MessageCreate){
+func checkBeatmapLink(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	//check if message contains only one beatmap link
 	BeatmapSet := strings.Count(m.Content, "https://osu.ppy.sh/s/")
