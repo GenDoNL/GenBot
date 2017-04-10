@@ -10,6 +10,7 @@ import (
 
 	"github.com/koffeinsource/go-imgur"
 	"github.com/koffeinsource/go-klogger"
+	"github.com/thehowl/go-osuapi"
 )
 
 // Variables used for Command line parameters
@@ -17,6 +18,8 @@ var (
 	Token string
 	BotID string
 	ImgurID string
+	OsuID string
+	osu_client osuapi.Client
 	Servers map[string]*ServerData
 	AdminCommands map[string]func(*discordgo.Session, MessageData, *ServerData)
 	PruneCommands map[string]func(*discordgo.Session, MessageData, *ServerData)
@@ -95,6 +98,7 @@ func setUp() {
 func init() {
 	flag.StringVar(&Token, "t", "", "Bot Token")
 	flag.StringVar(&ImgurID, "i", "", "Imgur Token")
+	flag.StringVar(&OsuID, "o", "", "Osu Token")
 	flag.Parse()
 }
 
@@ -105,6 +109,8 @@ func main() {
 	img_client.HTTPClient = new(http.Client)
 	img_client.Log = new(klogger.CLILogger)
 	img_client.ImgurClientID = ImgurID
+
+	osu_client = *osuapi.NewClient(OsuID)
 
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + Token)
@@ -156,6 +162,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Retrieve the server data of the given server.
 	serverData := getServerData(s, m.ChannelID)
+
+	//Check for any beatmap links in message
+	checkBeatmapLink(s, m)
 
 	if serverData.Key != msg.Key {
 		return
