@@ -11,18 +11,20 @@ import (
 func checkBeatmapLink(s *discordgo.Session, m *discordgo.MessageCreate){
 
 	//check if message contains only one beatmap link
-	if strings.Contains(m.Content, "https://osu.ppy.sh/s/") && strings.Contains(m.Content, "https://osu.ppy.sh/b/") || strings.Count(m.Content, "https://osu.ppy.sh/s/") > 1 || strings.Count(m.Content, "https://osu.ppy.sh/b/") > 1{
+	BeatmapSet := strings.Count(m.Content, "https://osu.ppy.sh/s/")
+	Beatmap := strings.Count(m.Content, "https://osu.ppy.sh/b/")
+	if BeatmapSet + Beatmap != 1 {
 		return
 	}
 
 	id := 0
 
 	//check if message contains beatmap set
-	if strings.Contains(m.Content, "https://osu.ppy.sh/s/"){
+	if BeatmapSet == 1 {
 
 		//get beatmap id in the message
 		tmp_id, err := strconv.Atoi(strings.Split(string(m.Content[strings.Index(m.Content,"https://osu.ppy.sh/s/")+21:])," ")[0])
-		if err != nil{
+		if err != nil {
 			fmt.Println("An error ocurred while getting beatmap id, ",err)
 			return
 		}
@@ -30,11 +32,11 @@ func checkBeatmapLink(s *discordgo.Session, m *discordgo.MessageCreate){
 	}
 
 	//check if message contains specific beatmap difficulty
-	if strings.Contains(m.Content, "https://osu.ppy.sh/b/"){
+	if Beatmap == 1 {
 
 		//get beatmap id in the message
 		tmp_id, err := strconv.Atoi(strings.Split(strings.Split(string(m.Content[strings.Index(m.Content,"https://osu.ppy.sh/b/")+21:])," ")[0],"?")[0])
-		if err != nil{
+		if err != nil {
 			fmt.Println("An error ocurred while getting beatmap id, ",err)
 			return
 		}
@@ -42,34 +44,34 @@ func checkBeatmapLink(s *discordgo.Session, m *discordgo.MessageCreate){
 	}
 
 	//return if there's no beatmap link
-	if id == 0{
+	if id == 0 {
 		return
 	}
 
 	var opts osuapi.GetBeatmapsOpts
 
-	if strings.Contains(m.Content, "https://osu.ppy.sh/s/"){
+	if BeatmapSet == 1 {
 		opts = osuapi.GetBeatmapsOpts{BeatmapSetID: id}
-	}else{
+	} else {
 		opts = osuapi.GetBeatmapsOpts{BeatmapID: id}
 	}
 
 	//get beatmap info
-	beatmaps, err := OsuClient.GetBeatmaps(opts)
-	if err != nil{
+	beatmaps, err := osu_client.GetBeatmaps(opts)
+	if err != nil {
 		fmt.Println("An error ocurred while fecthing beatmap, ",err)
 		return
 	}
 
 	//check for empty list in case of no beatmaps found
-	if len(beatmaps) == 0{
+	if len(beatmaps) == 0 {
 		return
 	}
 
 	//get the highest difficulty in mapset
 	beatmap := beatmaps[0]
-	for i := 1;i < len(beatmaps); i++{
-		if beatmaps[i].DifficultyRating > beatmap.DifficultyRating{
+	for i := 1; i < len(beatmaps); i++ {
+		if beatmaps[i].DifficultyRating > beatmap.DifficultyRating {
 			beatmap = beatmaps[i]
 		}
 	}
@@ -90,15 +92,15 @@ func checkBeatmapLink(s *discordgo.Session, m *discordgo.MessageCreate){
 
 	//send the message. finally.
 	_, err = s.ChannelMessageSendEmbed(m.ChannelID, &message)
-	if err != nil{
+	if err != nil {
 		fmt.Println("An error ocurred while sending embed message, ",err)
 	}
 }
 
 //get time in format MM:SS
-func parseTime(s int) string{
+func parseTime(s int) string {
 
-	if s < 61{
+	if s < 61 {
 		return "00:"+strconv.Itoa(s)
 	}
 	m := int(s/60)

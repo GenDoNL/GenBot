@@ -19,7 +19,7 @@ var (
 	BotID string
 	ImgurID string
 	OsuID string
-	OsuClient osuapi.Client
+	osu_client osuapi.Client
 	Servers map[string]*ServerData
 	AdminCommands map[string]func(*discordgo.Session, MessageData, *ServerData)
 	PruneCommands map[string]func(*discordgo.Session, MessageData, *ServerData)
@@ -110,7 +110,7 @@ func main() {
 	img_client.Log = new(klogger.CLILogger)
 	img_client.ImgurClientID = ImgurID
 
-	OsuClient = *osuapi.NewClient(OsuID)
+	osu_client = *osuapi.NewClient(OsuID)
 
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + Token)
@@ -164,7 +164,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	serverData := getServerData(s, m.ChannelID)
 
 	//Check for any beatmap links in message
-	checkBeatmapLink(s,m)
+	checkBeatmapLink(s, m)
 
 	if serverData.Key != msg.Key {
 		return
