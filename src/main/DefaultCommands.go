@@ -4,6 +4,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"math/rand"
 
+	"time"
 )
 
 // Retrieves the me_irl of a given user.
@@ -24,7 +25,7 @@ func getImage(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	// Check there is server data for the given channel and check if there is at least 1 album.
 	if channel, ok := serverData.Channels[msg.ChannelID]; ok && len(channel.Albums) > 0 {
 		// Get a random index and get the Album ID on that index.
-		nmbr := rand.Int() % len(channel.Albums)
+		nmbr := rand.Intn(time.Now().Nanosecond()) % len(channel.Albums)
 		id := channel.Albums[nmbr]
 
 		// Get the data from the cache.
@@ -44,7 +45,7 @@ func getImage(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 		}
 
 		// Get a random image from the album and get the link of said image.
-		rndImg := rand.Int() % len(data.Images)
+		rndImg := rand.Intn(time.Now().Nanosecond()) % len(data.Images)
 		linkToImg := data.Images[rndImg].Link
 
 		s.ChannelMessageSend(msg.ChannelID, linkToImg)

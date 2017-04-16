@@ -4,14 +4,23 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"strings"
 	"errors"
+	"fmt"
 )
 
 
 // This function parse a discord.MessageCreate into a MessageData struct.
 func parseCommand(m *discordgo.MessageCreate) MessageData {
-	split := strings.Fields(m.Content)
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Error with: `" + m.Content + "`, I should fix dis...")
+		}
+	} ()
 
-	return MessageData{m.Content[:1], strings.ToLower(split[0][1:]), split[1:], m.ID,m.ChannelID, m.Mentions,m.Author }
+	split := strings.Fields(m.Content)
+	Key := m.Content[:1]
+	Command := strings.ToLower(split[0][1:])
+	Content := split[1:]
+	return MessageData{Key, Command, Content, m.ID,m.ChannelID, m.Mentions,m.Author }
 }
 
 // This function a string into an ID if the string is a mention.
@@ -32,7 +41,7 @@ func parseMention(str string) (string, error) {
 
 // Creates a command in the given server given a name and a message.
 func createCommand(data *ServerData, commandName, message string) {
-	data.Commands[commandName] = &CommandData{commandName, message}
+	data.Commands[commandName] = &CommandData{strings.ToLower(commandName), message}
 	writeServerData()
 }
 

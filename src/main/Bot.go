@@ -153,7 +153,7 @@ func main() {
 // message is created on any channel that the autenticated bot has access to.
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
-	if m.Author.ID == BotID {
+	if m.Author.ID == BotID || len(m.Content) < 1 {
 		return
 	}
 
