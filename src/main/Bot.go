@@ -79,6 +79,8 @@ func setUp() {
 		"forcereload": forceGetAlbum,
 		"addme_irl": addMe_irl,
 		"delme_irl": delMe_irl,
+		"lock": lock_channel,
+		"unlock": unlock_channel,
 	}
 
 	PruneCommands = map[string]func(*discordgo.Session, MessageData, *ServerData){

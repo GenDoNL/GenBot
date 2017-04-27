@@ -31,7 +31,7 @@ func parseMention(str string) (string, error) {
 
 	res := str[2:len(str)-1]
 
-	// Necesarry to allow nicknames.
+	// Necessary to allow nicknames.
 	if string(res[0]) == "!" {
 		res =  res[1:len(res)-1]
 	}
@@ -71,4 +71,29 @@ func userInSlice(a string, list []*discordgo.User) bool {
 		}
 	}
 	return false
+}
+
+// Gets the specific role by name out of a role list.
+func getRoleByName(name string, roles []*discordgo.Role) (r discordgo.Role, e error) {
+	for _, elem := range roles {
+		if elem.Name == name {
+			r = *elem
+			return
+		}
+	}
+	e = errors.New("Role name not found in the specified role array: "+name)
+	return
+}
+
+
+// Gets the permission override object from a role id.
+func getRolePermissions(id string, perms []*discordgo.PermissionOverwrite) (p discordgo.PermissionOverwrite, e error){
+	for _, elem := range perms {
+		if elem.ID == id {
+			p = *elem
+			return
+		}
+	}
+	e = errors.New("Permissions not found in the specified role: "+id)
+	return
 }
