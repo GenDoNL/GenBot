@@ -184,7 +184,7 @@ func delMe_irl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	writeServerData()
 
 
-	_, _ = s.ChannelMessageSend(msg.ChannelID, "Removed " + msg.Key+ "me_irl Command.")
+	_, _ = s.ChannelMessageSend(msg.ChannelID, "Removed " + msg.Key + "me_irl Command.")
 }
 
 func addMe_irl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
@@ -214,7 +214,7 @@ func addMe_irl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	serverData.Me_irlCommands[id] = &Me_irlData{id, nick, content}
 	writeServerData()
 
-	_, _ = s.ChannelMessageSend(msg.ChannelID, "Added "+msg.Key+command+".")
+	_, _ = s.ChannelMessageSend(msg.ChannelID, "Added " + msg.Key + command + ".")
 }
 
 func lock_channel(s *discordgo.Session, msg MessageData, serverData *ServerData) {
@@ -248,7 +248,7 @@ func lock_channel(s *discordgo.Session, msg MessageData, serverData *ServerData)
 	}
 
 	//deny sending messages and update it
-	err = s.ChannelPermissionSet(ch.ID, everyonePerms.ID ,everyonePerms.Type, everyonePerms.Allow ^ 2048, everyonePerms.Deny | 2048)
+	err = s.ChannelPermissionSet(ch.ID, everyonePerms.ID ,everyonePerms.Type, everyonePerms.Allow ^ 0x800, everyonePerms.Deny | 0x800)
 	if err != nil {
 		fmt.Println("Error unlocking channel: ", err)
 	}
@@ -285,7 +285,7 @@ func unlock_channel(s *discordgo.Session, msg MessageData, serverData *ServerDat
 	}
 
 	//allow sending messages and update it
-	err = s.ChannelPermissionSet(ch.ID, everyonePerms.ID, everyonePerms.Type, everyonePerms.Allow | 2048, everyonePerms.Deny ^ 2048)
+	err = s.ChannelPermissionSet(ch.ID, everyonePerms.ID, everyonePerms.Type, everyonePerms.Allow | 0x800, everyonePerms.Deny ^ 0x800)
 	if err != nil {
 		fmt.Println("Error unlocking channel: ", err)
 	}

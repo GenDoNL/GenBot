@@ -99,7 +99,9 @@ func checkBeatmapLink(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 //get time in format MM:SS
 func parseTime(s int) string {
-
+	if s < 10 {
+		return "00:0"+strconv.Itoa(s)
+	}
 	if s < 61 {
 		return "00:"+strconv.Itoa(s)
 	}
