@@ -81,7 +81,7 @@ func getRoleByName(name string, roles []*discordgo.Role) (r discordgo.Role, e er
 			return
 		}
 	}
-	e = errors.New("Role name not found in the specified role array: "+name)
+	e = errors.New("Role name not found in the specified role array: " + name)
 	return
 }
 
@@ -94,6 +94,6 @@ func getRolePermissions(id string, perms []*discordgo.PermissionOverwrite) (p di
 			return
 		}
 	}
-	e = errors.New("Permissions not found in the specified role: "+id)
+	e = errors.New("Permissions not found in the specified role: " + id)
 	return
 }

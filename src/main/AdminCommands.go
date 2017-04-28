@@ -208,13 +208,13 @@ func addMe_irl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	createCommand(serverData, command, content)
 
 	if len(serverData.Me_irlCommands) == 0 {
-		serverData.Me_irlCommands =  make(map[string]*(Me_irlData))
+		serverData.Me_irlCommands = make(map[string]*(Me_irlData))
 	}
 
 	serverData.Me_irlCommands[id] = &Me_irlData{id, nick, content}
 	writeServerData()
 
-	_, _ = s.ChannelMessageSend(msg.ChannelID, "Added " + msg.Key+ command + ".")
+	_, _ = s.ChannelMessageSend(msg.ChannelID, "Added "+msg.Key+command+".")
 }
 
 func lock_channel(s *discordgo.Session, msg MessageData, serverData *ServerData) {
@@ -222,33 +222,33 @@ func lock_channel(s *discordgo.Session, msg MessageData, serverData *ServerData)
 	//get channel object
 	ch, err := s.Channel(msg.ChannelID)
 	if err != nil {
-		fmt.Println("Couldn't find channel with following id: ",msg.ChannelID)
+		fmt.Println("Couldn't find channel with following id: ", msg.ChannelID)
 		return
 	}
 
 	//get server object
 	sv, err := s.Guild(serverData.Id)
 	if err != nil {
-		fmt.Println("Couldn't find channel with following id: ",serverData.Id)
+		fmt.Println("Couldn't find channel with following id: ", serverData.Id)
 		return
 	}
 
 	//get @everyone role object
 	role, err := getRoleByName("@everyone",sv.Roles)
 	if err != nil {
-		fmt.Println("Couldn't find @everyone role of the following server: ",serverData.Id)
+		fmt.Println("Couldn't find @everyone role of the following server: ", serverData.Id)
 		return
 	}
 
 	//get @everyone permissions
-	everyonePerms, err := getRolePermissions(role.ID,ch.PermissionOverwrites)
+	everyonePerms, err := getRolePermissions(role.ID, ch.PermissionOverwrites)
 	if err != nil {
-		fmt.Println("Couldn't get @everyone permissions of the following server: ",serverData.Id)
+		fmt.Println("Couldn't get @everyone permissions of the following server: ", serverData.Id)
 		return
 	}
 
 	//deny sending messages and update it
-	err = s.ChannelPermissionSet(ch.ID, everyonePerms.ID , everyonePerms.Type, everyonePerms.Allow ^ 2048, everyonePerms.Deny | 2048)
+	err = s.ChannelPermissionSet(ch.ID, everyonePerms.ID ,everyonePerms.Type, everyonePerms.Allow ^ 2048, everyonePerms.Deny | 2048)
 	if err != nil {
 		fmt.Println("Error unlocking channel: ", err)
 	}
@@ -259,33 +259,33 @@ func unlock_channel(s *discordgo.Session, msg MessageData, serverData *ServerDat
 	//get channel object
 	ch, err := s.Channel(msg.ChannelID)
 	if err != nil {
-		fmt.Println("Couldn't find channel with following id: ",msg.ChannelID)
+		fmt.Println("Couldn't find channel with following id: ", msg.ChannelID)
 		return
 	}
 
 	//get server object
 	sv, err := s.Guild(serverData.Id)
 	if err != nil {
-		fmt.Println("Couldn't find channel with following id: ",serverData.Id)
+		fmt.Println("Couldn't find channel with following id: ", serverData.Id)
 		return
 	}
 
 	//get @everyone role object
-	role, err := getRoleByName("@everyone",sv.Roles)
+	role, err := getRoleByName("@everyone", sv.Roles)
 	if err != nil {
-		fmt.Println("Couldn't find @everyone role of the following server: ",serverData.Id)
+		fmt.Println("Couldn't find @everyone role of the following server: ", serverData.Id)
 		return
 	}
 
 	//get @everyone permissions
-	everyonePerms, err := getRolePermissions(role.ID,ch.PermissionOverwrites)
+	everyonePerms, err := getRolePermissions(role.ID, ch.PermissionOverwrites)
 	if err != nil {
-		fmt.Println("Couldn't get @everyone permissions of the following server: ",serverData.Id)
+		fmt.Println("Couldn't get @everyone permissions of the following server: ", serverData.Id)
 		return
 	}
 
 	//allow sending messages and update it
-	err = s.ChannelPermissionSet(ch.ID, everyonePerms.ID , everyonePerms.Type, everyonePerms.Allow | 2048, everyonePerms.Deny ^ 2048)
+	err = s.ChannelPermissionSet(ch.ID, everyonePerms.ID, everyonePerms.Type, everyonePerms.Allow | 2048, everyonePerms.Deny ^ 2048)
 	if err != nil {
 		fmt.Println("Error unlocking channel: ", err)
 	}
