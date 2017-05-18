@@ -1,19 +1,19 @@
 package main
 
 import (
-	"io/ioutil"
-	"fmt"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"os"
 )
 
 // Reads the server data from the data file.
 func readServerData() {
-	raw, err := ioutil.ReadFile("./data.json")
+	raw, err := ioutil.ReadFile(DataLocation)
 	if err != nil {
 		fmt.Println(err.Error())
 		if len(Servers) == 0 {
-			Servers =  make(map[string]*(ServerData))
+			Servers = make(map[string]*(ServerData))
 		}
 
 	} else {
@@ -31,11 +31,10 @@ func writeServerData() {
 		os.Exit(1)
 	}
 
-	rc := ioutil.WriteFile("./data.json", data, 0644)
+	rc := ioutil.WriteFile(DataLocation, data, 0644)
 	if rc != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 
 }
-
