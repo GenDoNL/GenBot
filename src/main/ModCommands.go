@@ -20,7 +20,7 @@ func prune(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	}
 
 	// Retrieves 'amount' of messages before the command was issued.
-	msgList, _ := s.ChannelMessages(msg.ChannelID, amount, msg.MessageID, "")
+	msgList, _ := s.ChannelMessages(msg.ChannelID, amount, msg.MessageID, "", "")
 
 	var count = 0
 	var msgID []string
