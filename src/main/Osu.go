@@ -9,7 +9,7 @@ import (
 )
 
 func checkBeatmapLink(s *discordgo.Session, m *discordgo.MessageCreate) {
-
+	beatmapStringLength := 21
 	//check if message contains only one beatmap link
 	BeatmapSet := strings.Count(m.Content, "https://osu.ppy.sh/s/")
 	Beatmap := strings.Count(m.Content, "https://osu.ppy.sh/b/")
@@ -23,7 +23,7 @@ func checkBeatmapLink(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if BeatmapSet == 1 {
 
 		//get beatmap id in the message
-		tmp_id, err := strconv.Atoi(strings.Split(string(m.Content[strings.Index(m.Content, "https://osu.ppy.sh/s/")+21:]), " ")[0])
+		tmp_id, err := strconv.Atoi(strings.Split(string(m.Content[strings.Index(m.Content, "https://osu.ppy.sh/s/")+beatmapStringLength:]), " ")[0])
 		if err != nil {
 			fmt.Println("An error ocurred while getting beatmap id, ", err)
 			return
@@ -35,7 +35,9 @@ func checkBeatmapLink(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if Beatmap == 1 {
 
 		//get beatmap id in the message
-		tmp_id, err := strconv.Atoi(strings.Split(strings.Split(string(m.Content[strings.Index(m.Content, "https://osu.ppy.sh/b/")+21:]), " ")[0], "?")[0])
+		str := strings.Split(string(m.Content[strings.Index(m.Content, "https://osu.ppy.sh/b/")+beatmapStringLength:]), " ")[0]
+		str = strings.Split(str, "?")[0]
+		tmp_id, err := strconv.Atoi(strings.Split(str, "&")[0])
 		if err != nil {
 			fmt.Println("An error ocurred while getting beatmap id, ", err)
 			return
@@ -106,6 +108,10 @@ func parseTime(s int) string {
 		return "00:" + strconv.Itoa(s)
 	}
 	m := int(s / 60)
-	s = s - m*60
+	s = s % 60
+	if s < 10 {
+		return strconv.Itoa(m) + ":0" + strconv.Itoa(s)
+	}
+
 	return strconv.Itoa(m) + ":" + strconv.Itoa(s)
 }
