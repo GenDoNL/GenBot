@@ -15,38 +15,38 @@ import (
 
 // Variables used for Command line parameters
 var (
-	Token string
-	BotID string
-	ImgurID string
-	OsuID string
-	osu_client osuapi.Client
-	Servers map[string]*ServerData
-	AdminCommands map[string]func(*discordgo.Session, MessageData, *ServerData)
-	PruneCommands map[string]func(*discordgo.Session, MessageData, *ServerData)
+	Token           string
+	BotID           string
+	ImgurID         string
+	OsuID           string
+	osu_client      osuapi.Client
+	Servers         map[string]*ServerData
+	AdminCommands   map[string]func(*discordgo.Session, MessageData, *ServerData)
+	PruneCommands   map[string]func(*discordgo.Session, MessageData, *ServerData)
 	DefaultCommands map[string]func(*discordgo.Session, MessageData, *ServerData)
-	AlbumCache map[string]*imgur.AlbumInfo
-
+	AlbumCache      map[string]*imgur.AlbumInfo
 )
 
 var img_client *imgur.Client = new(imgur.Client)
+var DataLocation string = "./data.json"
 
 type ServerData struct {
-	Id string `json:"id"`
-	Commanders map[string]bool `json:"commanders"`
-	Channels map[string]*ChannelData `json:"channels"`
-	Commands map[string]*CommandData `json:"commands"`
-	Me_irlCommands map[string]*Me_irlData `json:"me_irl"`
-	Key string `json:"Key"`
+	Id             string                  `json:"id"`
+	Commanders     map[string]bool         `json:"commanders"`
+	Channels       map[string]*ChannelData `json:"channels"`
+	Commands       map[string]*CommandData `json:"commands"`
+	Me_irlCommands map[string]*Me_irlData  `json:"me_irl"`
+	Key            string                  `json:"Key"`
 }
 
 type Me_irlData struct {
-	UserID string `json:"id"`
+	UserID   string `json:"id"`
 	Nickname string `json:"nickname"`
-	Content string `json:"content"`
+	Content  string `json:"content"`
 }
 
 type CommandData struct {
-	Name string `json:"name"`
+	Name    string `json:"name"`
 	Content string `json:"content"`
 }
 
@@ -61,26 +61,25 @@ type MessageData struct {
 }
 
 type ChannelData struct {
-	Id string `json:"ID"`
+	Id     string   `json:"ID"`
 	Albums []string `json:"albums"`
-
 }
 
 func setUp() {
 	// Set up all the commands
 	AdminCommands = map[string]func(*discordgo.Session, MessageData, *ServerData){
-		"addcommand": addCommand,
-		"delcommand": delCommand,
+		"addcommand":   addCommand,
+		"delcommand":   delCommand,
 		"addcommander": addCommander,
 		"delcommander": delCommander,
-		"setkey": setKey,
-		"addalbum": addAlbum,
-		"delalbum": delAlbum,
-		"forcereload": forceGetAlbum,
-		"addme_irl": addMe_irl,
-		"delme_irl": delMe_irl,
-		"lock": lock_channel,
-		"unlock": unlock_channel,
+		"setkey":       setKey,
+		"addalbum":     addAlbum,
+		"delalbum":     delAlbum,
+		"forcereload":  forceGetAlbum,
+		"addme_irl":    addMe_irl,
+		"delme_irl":    delMe_irl,
+		"lock":         lock_channel,
+		"unlock":       unlock_channel,
 	}
 
 	PruneCommands = map[string]func(*discordgo.Session, MessageData, *ServerData){
@@ -88,23 +87,22 @@ func setUp() {
 	}
 
 	DefaultCommands = map[string]func(*discordgo.Session, MessageData, *ServerData){
-		"i" : getImage,
-		"image" : getImage,
+		"i":      getImage,
+		"image":  getImage,
 		"me_irl": me_irl,
 	}
 
 	// Set up the cache so we do not have to make multiple API calls for the same album.
-	AlbumCache = make(map [string]*imgur.AlbumInfo)
+	AlbumCache = make(map[string]*imgur.AlbumInfo)
 }
 
 func init() {
 	flag.StringVar(&Token, "t", "", "Bot Token")
 	flag.StringVar(&ImgurID, "i", "", "Imgur Token")
 	flag.StringVar(&OsuID, "o", "", "Osu Token")
+	flag.StringVar(&DataLocation, "d", "", "Data Location")
 	flag.Parse()
 }
-
-
 
 func main() {
 
@@ -150,7 +148,6 @@ func main() {
 	return
 }
 
-
 // This function will be called (due to AddHandler above) every time a new
 // message is created on any channel that the autenticated bot has access to.
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -185,7 +182,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if isCommander, ok := serverData.Commanders[m.Author.ID]; isAllowedToPrune(perm) || (ok && isCommander) {
 			f(s, msg, serverData)
 		} else {
-			s.ChannelMessageSend(m.ChannelID, "Insufficient permission to use **" + msg.Command+ "**.")
+			s.ChannelMessageSend(m.ChannelID, "Insufficient permission to use **"+msg.Command+"**.")
 		}
 	} else if f, ok := DefaultCommands[msg.Command]; ok {
 		f(s, msg, serverData)

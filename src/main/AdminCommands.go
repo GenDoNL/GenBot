@@ -1,19 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"strings"
-	"fmt"
 )
-
 
 func delCommander(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commanders) == 0 {
-		serverData.Commanders =  make(map[string]bool)
+		serverData.Commanders = make(map[string]bool)
 	}
 
 	if len(msg.Content) == 0 {
-		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `" + serverData.Key + "delCommander <@User> `.")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `"+serverData.Key+"delCommander <@User> `.")
 		return
 	}
 
@@ -31,11 +30,11 @@ func delCommander(s *discordgo.Session, msg MessageData, serverData *ServerData)
 
 func addCommander(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commanders) == 0 {
-		serverData.Commanders =  make(map[string]bool)
+		serverData.Commanders = make(map[string]bool)
 	}
 
 	if len(msg.Content) == 0 {
-		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `" + serverData.Key + "addCommander <@User> `.")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `"+serverData.Key+"addCommander <@User> `.")
 		return
 	}
 
@@ -54,11 +53,11 @@ func addCommander(s *discordgo.Session, msg MessageData, serverData *ServerData)
 
 func addAlbum(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Channels) == 0 {
-		serverData.Channels =  make(map[string]*(ChannelData))
+		serverData.Channels = make(map[string]*(ChannelData))
 	}
 
 	if len(msg.Content) == 0 {
-		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `" + serverData.Key + "addalbum <AlbumID> `.")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `"+serverData.Key+"addalbum <AlbumID> `.")
 		return
 	}
 
@@ -69,16 +68,15 @@ func addAlbum(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 		channel = serverData.Channels[msg.ChannelID]
 	}
 
-
 	channel.Albums = append(channel.Albums, msg.Content[0])
 	writeServerData()
-	_, _ = s.ChannelMessageSend(msg.ChannelID, "Added album **" + msg.Content[0] + "** to album list.")
+	_, _ = s.ChannelMessageSend(msg.ChannelID, "Added album **"+msg.Content[0]+"** to album list.")
 
 }
 
 func forceGetAlbum(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Channels) == 0 {
-		serverData.Channels =  make(map[string]*(ChannelData))
+		serverData.Channels = make(map[string]*(ChannelData))
 	}
 
 	data, _, err := img_client.GetAlbumInfo(msg.Content[0])
@@ -89,11 +87,10 @@ func forceGetAlbum(s *discordgo.Session, msg MessageData, serverData *ServerData
 	AlbumCache[msg.Content[0]] = data
 }
 
-
 // Helper function to actually remove t he albums from the list.
 func deleteAlbums(albumList []string, str string) []string {
 	list := albumList
-	for i :=0; i < len(list); i++ {
+	for i := 0; i < len(list); i++ {
 		if list[i] == str {
 			list = append(list[:i], list[i+1:]...)
 			i--
@@ -105,19 +102,19 @@ func deleteAlbums(albumList []string, str string) []string {
 
 func delAlbum(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commands) == 0 {
-		serverData.Commands =  make(map[string]*(CommandData))
+		serverData.Commands = make(map[string]*(CommandData))
 	}
 
 	if channel, ok := serverData.Channels[msg.ChannelID]; ok && len(channel.Albums) > 0 {
 		serverData.Channels[msg.ChannelID].Albums = deleteAlbums(serverData.Channels[msg.ChannelID].Albums, msg.Content[0])
 		writeServerData()
-		_, _ = s.ChannelMessageSend(msg.ChannelID, "Removed **" + msg.Content[0] + "** from the list of albums.")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Removed **"+msg.Content[0]+"** from the list of albums.")
 	}
 }
 
 func addCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commands) == 0 {
-		serverData.Commands =  make(map[string]*(CommandData))
+		serverData.Commands = make(map[string]*(CommandData))
 	}
 
 	if len(msg.Content) > 1 {
@@ -130,29 +127,29 @@ func addCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 
 func delCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commands) == 0 {
-		serverData.Commands =  make(map[string]*(CommandData))
+		serverData.Commands = make(map[string]*(CommandData))
 	}
 
 	if _, ok := serverData.Commands[msg.Content[0]]; ok {
 		delete(serverData.Commands, msg.Content[0])
 		writeServerData()
-		_, _ = s.ChannelMessageSend(msg.ChannelID, "Removed **" + msg.Content[0] + "** from the list of commands.")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Removed **"+msg.Content[0]+"** from the list of commands.")
 
 	} else {
-		_, _ = s.ChannelMessageSend(msg.ChannelID, "The Command **" + msg.Content[0] + "** has not been found.")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "The Command **"+msg.Content[0]+"** has not been found.")
 	}
 
 }
 
 func setKey(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commands) == 0 {
-		serverData.Commands =  make(map[string]*(CommandData))
+		serverData.Commands = make(map[string]*(CommandData))
 	}
 
 	if len(msg.Content[0]) == 1 {
 		serverData.Key = msg.Content[0]
 		writeServerData()
-		_, _ = s.ChannelMessageSend(msg.ChannelID, "Updated bot Key to **" + msg.Content[0] + "**.")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Updated bot Key to **"+msg.Content[0]+"**.")
 	} else {
 		_, _ = s.ChannelMessageSend(msg.ChannelID, "Key should have a length of **1**")
 	}
@@ -183,8 +180,7 @@ func delMe_irl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	}
 	writeServerData()
 
-
-	_, _ = s.ChannelMessageSend(msg.ChannelID, "Removed " + msg.Key + "me_irl Command.")
+	_, _ = s.ChannelMessageSend(msg.ChannelID, "Removed "+msg.Key+"me_irl Command.")
 }
 
 func addMe_irl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
@@ -214,7 +210,7 @@ func addMe_irl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	serverData.Me_irlCommands[id] = &Me_irlData{id, nick, content}
 	writeServerData()
 
-	_, _ = s.ChannelMessageSend(msg.ChannelID, "Added " + msg.Key + command + ".")
+	_, _ = s.ChannelMessageSend(msg.ChannelID, "Added "+msg.Key+command+".")
 }
 
 func lock_channel(s *discordgo.Session, msg MessageData, serverData *ServerData) {
@@ -234,7 +230,7 @@ func lock_channel(s *discordgo.Session, msg MessageData, serverData *ServerData)
 	}
 
 	//get @everyone role object
-	role, err := getRoleByName("@everyone",sv.Roles)
+	role, err := getRoleByName("@everyone", sv.Roles)
 	if err != nil {
 		fmt.Println("Couldn't find @everyone role of the following server: ", serverData.Id)
 		return
@@ -248,9 +244,11 @@ func lock_channel(s *discordgo.Session, msg MessageData, serverData *ServerData)
 	}
 
 	//deny sending messages and update it
-	err = s.ChannelPermissionSet(ch.ID, everyonePerms.ID ,everyonePerms.Type, everyonePerms.Allow ^ 0x800, everyonePerms.Deny | 0x800)
+	err = s.ChannelPermissionSet(ch.ID, everyonePerms.ID, everyonePerms.Type, everyonePerms.Allow^0x800, everyonePerms.Deny|0x800)
 	if err != nil {
 		fmt.Println("Error unlocking channel: ", err)
+	} else {
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "This channel is now locked.")
 	}
 }
 
@@ -285,9 +283,10 @@ func unlock_channel(s *discordgo.Session, msg MessageData, serverData *ServerDat
 	}
 
 	//allow sending messages and update it
-	err = s.ChannelPermissionSet(ch.ID, everyonePerms.ID, everyonePerms.Type, everyonePerms.Allow | 0x800, everyonePerms.Deny ^ 0x800)
+	err = s.ChannelPermissionSet(ch.ID, everyonePerms.ID, everyonePerms.Type, everyonePerms.Allow|0x800, everyonePerms.Deny^0x800)
 	if err != nil {
 		fmt.Println("Error unlocking channel: ", err)
+	} else {
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "This channel is now unlocked.")
 	}
 }
-
