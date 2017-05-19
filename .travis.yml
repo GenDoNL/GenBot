@@ -1,0 +1,15 @@
+language: go
+
+matrix:
+  include:
+    - go: 1.8
+
+install:
+# Install all external dependencies, ensuring they are updated.
+- go get github.com/bwmarrin/discordgo
+- go get github.com/koffeinsource/go-imgur
+- go get github.com/koffeinsource/go-klogger
+- go get github.com/thehowl/go-osuapi
+
+script:
+go test ./...
