@@ -88,7 +88,7 @@ func setUp() {
 	}
 
 	PruneCommands = map[string]func(*discordgo.Session, MessageData, *ServerData){
-		"pruneCommand": pruneCommand,
+		"prune": pruneCommand,
 	}
 
 	DefaultCommands = map[string]func(*discordgo.Session, MessageData, *ServerData){
