@@ -18,37 +18,48 @@ var (
 	BotID           string
 	ImgurID         string
 	OsuID           string
-	osu_client      osuapi.Client
+	DataLocation 	string
+
 	Servers         map[string]*ServerData
 	AdminCommands   map[string]func(*discordgo.Session, MessageData, *ServerData)
 	PruneCommands   map[string]func(*discordgo.Session, MessageData, *ServerData)
 	DefaultCommands map[string]func(*discordgo.Session, MessageData, *ServerData)
 	AlbumCache      map[string]*imgur.AlbumInfo
+
+	osuClient       osuapi.Client
+	imgClient 		*imgur.Client
 )
 
-var img_client *imgur.Client = new(imgur.Client)
-var DataLocation string = "./data.json"
-
+// ServerData is the data which is saved for every server the bot is in.
 type ServerData struct {
-	Id             string                  `json:"id"`
-	Commanders     map[string]bool         `json:"commanders"`
-	Channels       map[string]*ChannelData `json:"channels"`
-	Commands       map[string]*CommandData `json:"commands"`
-	Me_irlCommands map[string]*Me_irlData  `json:"me_irl"`
-	Key            string                  `json:"Key"`
+	ID            string                  `json:"id"`
+	Commanders    map[string]bool         `json:"commanders"`
+	Channels      map[string]*ChannelData `json:"channels"`
+	Commands      map[string]*CommandData `json:"commands"`
+	meIrlCommands map[string]*MeIrlData   `json:"meIrl"`
+	Key           string                  `json:"Key"`
 }
 
-type Me_irlData struct {
+// ChannelData is the data which is saved for every channel
+type ChannelData struct {
+	ID     string   `json:"ID"`
+	Albums []string `json:"albums"`
+}
+
+// MeIrlData is the data which is saved for every meIrl
+type MeIrlData struct {
 	UserID   string `json:"id"`
 	Nickname string `json:"nickname"`
 	Content  string `json:"content"`
 }
 
+// CommandData is the data which is saved for every command
 type CommandData struct {
 	Name    string `json:"name"`
 	Content string `json:"content"`
 }
 
+// MessageData is the parsed message, allows for easier access to arguments.
 type MessageData struct {
 	Key       string
 	Command   string
@@ -57,11 +68,6 @@ type MessageData struct {
 	ChannelID string
 	Mentions  []*discordgo.User
 	Author    *discordgo.User
-}
-
-type ChannelData struct {
-	Id     string   `json:"ID"`
-	Albums []string `json:"albums"`
 }
 
 func setUp() {
@@ -75,10 +81,10 @@ func setUp() {
 		"addalbum":     addAlbum,
 		"delalbum":     delAlbum,
 		"forcereload":  forceGetAlbum,
-		"addme_irl":    addMe_irl,
-		"delme_irl":    delMe_irl,
-		"lock":         lock_channel,
-		"unlock":       unlock_channel,
+		"addme_irl":    addMeIrl,
+		"delme_irl":    delMeIrl,
+		"lock":         lockChannel,
+		"unlock":       unlockChannel,
 	}
 
 	PruneCommands = map[string]func(*discordgo.Session, MessageData, *ServerData){
@@ -88,7 +94,7 @@ func setUp() {
 	DefaultCommands = map[string]func(*discordgo.Session, MessageData, *ServerData){
 		"i":      getImage,
 		"image":  getImage,
-		"me_irl": me_irl,
+		"meIrl": meIrl,
 	}
 
 	// Set up the cache so we do not have to make multiple API calls for the same album.
@@ -99,17 +105,17 @@ func init() {
 	flag.StringVar(&Token, "t", "", "Bot Token")
 	flag.StringVar(&ImgurID, "i", "", "Imgur Token")
 	flag.StringVar(&OsuID, "o", "", "Osu Token")
-	flag.StringVar(&DataLocation, "d", "", "Data Location")
+	flag.StringVar(&DataLocation, "d", "./data.json", "Data Location")
 	flag.Parse()
 }
 
 func main() {
+	imgClient = new(imgur.Client)
+	imgClient.HTTPClient = new(http.Client)
+	imgClient.Log = new(klogger.CLILogger)
+	imgClient.ImgurClientID = ImgurID
 
-	img_client.HTTPClient = new(http.Client)
-	img_client.Log = new(klogger.CLILogger)
-	img_client.ImgurClientID = ImgurID
-
-	osu_client = *osuapi.NewClient(OsuID)
+	osuClient = *osuapi.NewClient(OsuID)
 
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + Token)

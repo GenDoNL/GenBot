@@ -53,7 +53,7 @@ func constructBeatmapMessage(beatmap osuapi.Beatmap) discordgo.MessageEmbed {
 func getBeatmap(opts osuapi.GetBeatmapsOpts) (osuapi.Beatmap, error) {
 	//get beatmap info
 	var beatmap osuapi.Beatmap
-	beatmaps, err := osu_client.GetBeatmaps(opts)
+	beatmaps, err := osuClient.GetBeatmaps(opts)
 	if err != nil {
 		fmt.Println("Debug1")
 		return beatmap, err

@@ -7,12 +7,12 @@ import (
 	"time"
 )
 
-// Retrieves the me_irl of a given user.
-func me_irl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
-	if res, ok := serverData.Me_irlCommands[msg.Author.ID]; ok {
+// Retrieves the meIrl of a given user.
+func meIrl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+	if res, ok := serverData.meIrlCommands[msg.Author.ID]; ok {
 		_, _ = s.ChannelMessageSend(msg.ChannelID, res.Content)
 	} else {
-		_, _ = s.ChannelMessageSend(msg.ChannelID, "Sorry, you do not have a me_irl. ")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Sorry, you do not have a meIrl. ")
 	}
 }
 
@@ -35,7 +35,7 @@ func getImage(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 		// If album is not already in cache, retrieve it from the Imgur servers.
 		if !ok {
 			var err error
-			data, _, err = img_client.GetAlbumInfo(id)
+			data, _, err = imgClient.GetAlbumInfo(id)
 			if err != nil {
 				s.ChannelMessageSend(msg.ChannelID, "Something went wrong while trying to retrieve an image, maybe the Imgur API is down or **"+id+"** is not an album?")
 				return
