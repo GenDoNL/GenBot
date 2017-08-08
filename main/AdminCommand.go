@@ -6,13 +6,15 @@ import (
 	"strings"
 )
 
-func delCommander(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+// Deletes a commander from the list of commanders.
+// First argument should be a mention to the person who should be deleted.
+func delCommanderCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commanders) == 0 {
 		serverData.Commanders = make(map[string]bool)
 	}
 
 	if len(msg.Content) == 0 {
-		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `"+serverData.Key+"delCommander <@User> `.")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `"+serverData.Key+"delCommanderCommand <@User> `.")
 		return
 	}
 
@@ -28,13 +30,15 @@ func delCommander(s *discordgo.Session, msg MessageData, serverData *ServerData)
 	_, _ = s.ChannelMessageSend(msg.ChannelID, "Removed commander.")
 }
 
-func addCommander(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+// Add a commander to the list of commanders.
+// First argument should be a mention to the person who should be added.
+func addCommanderCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commanders) == 0 {
 		serverData.Commanders = make(map[string]bool)
 	}
 
 	if len(msg.Content) == 0 {
-		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `"+serverData.Key+"addCommander <@User> `.")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `"+serverData.Key+"addCommanderCommand <@User> `.")
 		return
 	}
 
@@ -51,7 +55,8 @@ func addCommander(s *discordgo.Session, msg MessageData, serverData *ServerData)
 
 }
 
-func addAlbum(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+// Adds an album to the list of albums.
+func addAlbumCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Channels) == 0 {
 		serverData.Channels = make(map[string]*(ChannelData))
 	}
@@ -64,7 +69,7 @@ func addAlbum(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	channel, ok := serverData.Channels[msg.ChannelID]
 
 	if !ok {
-		serverData.Channels[msg.ChannelID] = &ChannelData{Id: msg.ChannelID}
+		serverData.Channels[msg.ChannelID] = &ChannelData{ID: msg.ChannelID}
 		channel = serverData.Channels[msg.ChannelID]
 	}
 
@@ -74,12 +79,13 @@ func addAlbum(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 
 }
 
-func forceGetAlbum(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+// Refresh the data of the album which is cached.
+func forceGetAlbumCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Channels) == 0 {
 		serverData.Channels = make(map[string]*(ChannelData))
 	}
 
-	data, _, err := img_client.GetAlbumInfo(msg.Content[0])
+	data, _, err := imgClient.GetAlbumInfo(msg.Content[0])
 	if err != nil {
 		s.ChannelMessageSend(msg.ChannelID, "Something went wrong while trying to retrieve an image, maybe the Imgur API is down or is there a link which is not an album?")
 		return
@@ -87,7 +93,7 @@ func forceGetAlbum(s *discordgo.Session, msg MessageData, serverData *ServerData
 	AlbumCache[msg.Content[0]] = data
 }
 
-// Helper function to actually remove t he albums from the list.
+// Helper function to actually remove the albums from the list.
 func deleteAlbums(albumList []string, str string) []string {
 	list := albumList
 	for i := 0; i < len(list); i++ {
@@ -100,7 +106,8 @@ func deleteAlbums(albumList []string, str string) []string {
 	return list
 }
 
-func delAlbum(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+// Remove a specific album from the list of albums.
+func delAlbumCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commands) == 0 {
 		serverData.Commands = make(map[string]*(CommandData))
 	}
@@ -112,7 +119,10 @@ func delAlbum(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	}
 }
 
-func addCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+// Add a command to the list  of commands.
+// First argument should be the name, the rest should be the content.
+// Will overwrite existing commands!
+func addCommandCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commands) == 0 {
 		serverData.Commands = make(map[string]*(CommandData))
 	}
@@ -125,7 +135,10 @@ func addCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	}
 }
 
-func delCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+// Removes a command from the list of commands
+// First argument should be the name of the command that should be removed
+// Nothing happens if command is unknown.
+func delCommandCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commands) == 0 {
 		serverData.Commands = make(map[string]*(CommandData))
 	}
@@ -141,7 +154,9 @@ func delCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 
 }
 
-func setKey(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+// Change the command key of the server.
+// Key should be the first argument and only 1 char long.
+func setKeyCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commands) == 0 {
 		serverData.Commands = make(map[string]*(CommandData))
 	}
@@ -156,7 +171,8 @@ func setKey(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 
 }
 
-func delMe_irl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+// Remove a meIrlCommand command from a specific person.
+func delMeIrlCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	usage := "Usage: `" + msg.Key + "delme_irl <@User> `"
 
 	if len(msg.Content) < 1 {
@@ -171,19 +187,20 @@ func delMe_irl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 		return
 	}
 
-	if me_irl, ok := serverData.Me_irlCommands[id]; ok {
-		user := me_irl.Nickname + "_irl"
-		delete(serverData.Me_irlCommands, id)
+	if meIrl, ok := serverData.meIrlCommands[id]; ok {
+		user := meIrl.Nickname + "_irl"
+		delete(serverData.meIrlCommands, id)
 		if _, ok := serverData.Commands[user]; ok {
 			delete(serverData.Commands, user)
 		}
 	}
 	writeServerData()
 
-	_, _ = s.ChannelMessageSend(msg.ChannelID, "Removed "+msg.Key+"me_irl Command.")
+	_, _ = s.ChannelMessageSend(msg.ChannelID, "Removed "+msg.Key+"meIrlCommand Command.")
 }
 
-func addMe_irl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+// Add a meIrlCommand command from a specific person
+func addMeIrlCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	usage := "Usage: `" + msg.Key + "addme_irl <@User> <Nickname> <Content> `"
 	if len(msg.Content) < 3 {
 		_, _ = s.ChannelMessageSend(msg.ChannelID, usage)
@@ -203,17 +220,18 @@ func addMe_irl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	command := nick + "_irl"
 	createCommand(serverData, command, content)
 
-	if len(serverData.Me_irlCommands) == 0 {
-		serverData.Me_irlCommands = make(map[string]*(Me_irlData))
+	if len(serverData.meIrlCommands) == 0 {
+		serverData.meIrlCommands = make(map[string]*(MeIrlData))
 	}
 
-	serverData.Me_irlCommands[id] = &Me_irlData{id, nick, content}
+	serverData.meIrlCommands[id] = &MeIrlData{id, nick, content}
 	writeServerData()
 
 	_, _ = s.ChannelMessageSend(msg.ChannelID, "Added "+msg.Key+command+".")
 }
 
-func lock_channel(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+// Lock a channel, so the @everyone role won't be able to talk in the channel.
+func lockChannelCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 
 	//get channel object
 	ch, err := s.Channel(msg.ChannelID)
@@ -223,23 +241,23 @@ func lock_channel(s *discordgo.Session, msg MessageData, serverData *ServerData)
 	}
 
 	//get server object
-	sv, err := s.Guild(serverData.Id)
+	sv, err := s.Guild(serverData.ID)
 	if err != nil {
-		fmt.Println("Couldn't find channel with following id: ", serverData.Id)
+		fmt.Println("Couldn't find channel with following id: ", serverData.ID)
 		return
 	}
 
 	//get @everyone role object
 	role, err := getRoleByName("@everyone", sv.Roles)
 	if err != nil {
-		fmt.Println("Couldn't find @everyone role of the following server: ", serverData.Id)
+		fmt.Println("Couldn't find @everyone role of the following server: ", serverData.ID)
 		return
 	}
 
 	//get @everyone permissions
 	everyonePerms, err := getRolePermissions(role.ID, ch.PermissionOverwrites)
 	if err != nil {
-		fmt.Println("Couldn't get @everyone permissions of the following server: ", serverData.Id)
+		fmt.Println("Couldn't get @everyone permissions of the following server: ", serverData.ID)
 		return
 	}
 
@@ -252,7 +270,8 @@ func lock_channel(s *discordgo.Session, msg MessageData, serverData *ServerData)
 	}
 }
 
-func unlock_channel(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+// Unlock the channel, so the @everyone role will be allowed to talk again.
+func unlockChannelCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 
 	//get channel object
 	ch, err := s.Channel(msg.ChannelID)
@@ -262,23 +281,23 @@ func unlock_channel(s *discordgo.Session, msg MessageData, serverData *ServerDat
 	}
 
 	//get server object
-	sv, err := s.Guild(serverData.Id)
+	sv, err := s.Guild(serverData.ID)
 	if err != nil {
-		fmt.Println("Couldn't find channel with following id: ", serverData.Id)
+		fmt.Println("Couldn't find channel with following id: ", serverData.ID)
 		return
 	}
 
 	//get @everyone role object
 	role, err := getRoleByName("@everyone", sv.Roles)
 	if err != nil {
-		fmt.Println("Couldn't find @everyone role of the following server: ", serverData.Id)
+		fmt.Println("Couldn't find @everyone role of the following server: ", serverData.ID)
 		return
 	}
 
 	//get @everyone permissions
 	everyonePerms, err := getRolePermissions(role.ID, ch.PermissionOverwrites)
 	if err != nil {
-		fmt.Println("Couldn't get @everyone permissions of the following server: ", serverData.Id)
+		fmt.Println("Couldn't get @everyone permissions of the following server: ", serverData.ID)
 		return
 	}
 

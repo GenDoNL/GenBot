@@ -25,14 +25,14 @@ func parseCommand(m *discordgo.MessageCreate) MessageData {
 // This function a string into an ID if the string is a mention.
 func parseMention(str string) (string, error) {
 	if len(str) < 5 || (string(str[0]) != "<" || string(str[1]) != "@" || string(str[len(str)-1]) != ">") {
-		return "", errors.New("This is not an user.")
+		return "", errors.New("error while parsing mention, this is not an user")
 	}
 
-	res := str[2:]
+	res := str[2 : len(str)-1]
 
 	// Necessary to allow nicknames.
 	if string(res[0]) == "!" {
-		res = res[1 : len(res)-1]
+		res = res[1:]
 	}
 
 	return res, nil
@@ -45,21 +45,22 @@ func createCommand(data *ServerData, commandName, message string) {
 }
 
 // Returns the ServerData of a server, given a message object.
-func getServerData(s *discordgo.Session, channelId string) *ServerData {
-	channel, _ := s.Channel(channelId)
+func getServerData(s *discordgo.Session, channelID string) *ServerData {
+	channel, _ := s.Channel(channelID)
 
-	servId := channel.GuildID
+	servID := channel.GuildID
 
 	if len(Servers) == 0 {
 		Servers = make(map[string]*(ServerData))
 	}
 
-	if serv, ok := Servers[servId]; ok {
+	if serv, ok := Servers[servID]; ok {
 		return serv
-	} else {
-		Servers[servId] = &ServerData{Id: servId, Key: "!"}
-		return Servers[servId]
 	}
+
+	Servers[servID] = &ServerData{ID: servID, Key: "!"}
+	return Servers[servID]
+
 }
 
 // Checks whether a user id (String) is in a slice of users.

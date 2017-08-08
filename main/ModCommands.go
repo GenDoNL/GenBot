@@ -6,22 +6,21 @@ import (
 )
 
 // Handles pruning of messages
-func prune(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+func pruneCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(msg.Content) == 0 {
-		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `"+serverData.Key+"prune <amount(1-100)> <user(optional)>`.")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `"+serverData.Key+"prune amount(1-100)> <user(optional)>`.")
 		return
 	}
 
 	amount, err := strconv.Atoi(msg.Content[0])
 
 	if err != nil || amount < 1 || amount > 100 {
-		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `"+serverData.Key+"prune <amount(1-100)> <user(optional)>`.")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `"+serverData.Key+"prune<amount(1-100)> <user(optional)>`.")
 		return
 	}
 
 	// Retrieves 'amount' of messages before the command was issued.
 	msgList, _ := s.ChannelMessages(msg.ChannelID, amount, msg.MessageID, "", "")
-
 
 	var count = 0
 	var msgID []string
