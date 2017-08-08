@@ -11,6 +11,8 @@ import (
 func me_irl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if res, ok := serverData.Me_irlCommands[msg.Author.ID]; ok {
 		_, _ = s.ChannelMessageSend(msg.ChannelID, res.Content)
+	} else {
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Sorry, you do not have a me_irl. ")
 	}
 }
 
@@ -50,5 +52,9 @@ func getImage(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	} else {
 		_, _ = s.ChannelMessageSend(msg.ChannelID, "This channel does not have any albums, add an album using `"+serverData.Key+"addalbum <AlbumID> `.")
 	}
+
+}
+
+func help(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 
 }

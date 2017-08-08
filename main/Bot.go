@@ -3,13 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-
 	"net/http"
-
 	"github.com/bwmarrin/discordgo"
 
 	"github.com/koffeinsource/go-imgur"
 	"github.com/koffeinsource/go-klogger"
+
 	"github.com/thehowl/go-osuapi"
 )
 
