@@ -55,14 +55,11 @@ func getBeatmap(opts osuapi.GetBeatmapsOpts) (osuapi.Beatmap, error) {
 	var beatmap osuapi.Beatmap
 	beatmaps, err := osuClient.GetBeatmaps(opts)
 	if err != nil {
-		fmt.Println("Debug1")
 		return beatmap, err
 	}
 
 	//check for empty list in case of no beatmaps found
 	if len(beatmaps) == 0 {
-		fmt.Println("Debug2")
-
 		return beatmap, err
 	}
 
