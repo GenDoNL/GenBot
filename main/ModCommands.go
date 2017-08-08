@@ -15,7 +15,7 @@ func pruneCommand(s *discordgo.Session, msg MessageData, serverData *ServerData)
 	amount, err := strconv.Atoi(msg.Content[0])
 
 	if err != nil || amount < 1 || amount > 100 {
-		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `"+serverData.Key+"prune<amount(1-100)> <user(optional)>`.")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `"+serverData.Key+"prune <amount(1-100)> <user(optional)>`.")
 		return
 	}
 
