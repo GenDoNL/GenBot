@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"net/http"
 	"github.com/bwmarrin/discordgo"
+	"net/http"
 
 	"github.com/koffeinsource/go-imgur"
 	"github.com/koffeinsource/go-klogger"
@@ -14,11 +14,11 @@ import (
 
 // Variables used for Command line parameters
 var (
-	Token           string
-	BotID           string
-	ImgurID         string
-	OsuID           string
-	DataLocation 	string
+	Token        string
+	BotID        string
+	ImgurID      string
+	OsuID        string
+	DataLocation string
 
 	Servers         map[string]*ServerData
 	AdminCommands   map[string]func(*discordgo.Session, MessageData, *ServerData)
@@ -26,8 +26,8 @@ var (
 	DefaultCommands map[string]func(*discordgo.Session, MessageData, *ServerData)
 	AlbumCache      map[string]*imgur.AlbumInfo
 
-	osuClient       osuapi.Client
-	imgClient 		*imgur.Client
+	osuClient osuapi.Client
+	imgClient *imgur.Client
 )
 
 // ServerData is the data which is saved for every server the bot is in.
@@ -92,11 +92,11 @@ func setUp() {
 	}
 
 	DefaultCommands = map[string]func(*discordgo.Session, MessageData, *ServerData){
-		"i":            getImageCommand,
-		"image":        getImageCommand,
-		"meIrl":        meIrlCommand,
-		"help":         helpCommand,
-		"commandlist":	commandListCommands,
+		"i":           getImageCommand,
+		"image":       getImageCommand,
+		"meIrl":       meIrlCommand,
+		"help":        helpCommand,
+		"commandlist": commandListCommands,
 	}
 
 	// Set up the cache so we do not have to make multiple API calls for the same album.

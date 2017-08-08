@@ -4,10 +4,10 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"math/rand"
 
-	"time"
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 )
 
 // Retrieves the meIrlCommand of a given user.
@@ -66,9 +66,9 @@ func helpCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) 
 	}
 
 	s.ChannelMessageSend(channel.ID,
-		"Heya, This is OwOBot written by GenDoNL. \n" +
-		"For the list of commands use **" + serverData.Key + "commandlist** in the server. \n\n" +
-		"The source code of the bot can be found here: https://github.com/GenDoNL/GoDiscordBot")
+		"Heya, This is OwOBot written by GenDoNL. \n"+
+			"For the list of commands use **"+serverData.Key+"commandlist** in the server. \n\n"+
+			"The source code of the bot can be found here: https://github.com/GenDoNL/GoDiscordBot")
 }
 
 // Get all the message
@@ -92,5 +92,5 @@ func commandListCommands(s *discordgo.Session, msg MessageData, serverData *Serv
 	}
 
 	s.ChannelMessageSend(channel.ID,
-		"```" + message + " ```")
+		"```"+message+" ```")
 }

@@ -28,7 +28,7 @@ func parseMention(str string) (string, error) {
 		return "", errors.New("error while parsing mention, this is not an user")
 	}
 
-	res := str[2:len(str)-1]
+	res := str[2 : len(str)-1]
 
 	// Necessary to allow nicknames.
 	if string(res[0]) == "!" {

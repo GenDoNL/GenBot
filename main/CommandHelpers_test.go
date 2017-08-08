@@ -1,9 +1,9 @@
 package main
 
 import (
-	"testing"
 	"github.com/bwmarrin/discordgo"
 	"strings"
+	"testing"
 )
 
 var basicUser = &discordgo.User{ID: "3333", Username: "Me"}

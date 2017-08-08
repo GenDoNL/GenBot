@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 )
+
 var (
 	beatmapStringLength = 21
 )
@@ -23,7 +24,7 @@ func getBeatmapSetID(content string) (int, error) {
 
 func getBeatmapID(content string) (int, error) {
 
-		//get beatmap id in the message
+	//get beatmap id in the message
 	str := strings.Split(string(content[strings.Index(content, "https://osu.ppy.sh/b/")+beatmapStringLength:]), " ")[0]
 	str = strings.Split(str, "?")[0]
 	id, err := strconv.Atoi(strings.Split(str, "&")[0])
@@ -78,14 +79,13 @@ func checkBeatmapLink(s *discordgo.Session, m *discordgo.MessageCreate) {
 	//check if message contains only one beatmap link
 	beatmapSetID := strings.Count(m.Content, "https://osu.ppy.sh/s/")
 	beatmapID := strings.Count(m.Content, "https://osu.ppy.sh/b/")
-	if beatmapSetID + beatmapID != 1 {
+	if beatmapSetID+beatmapID != 1 {
 		return
 	}
 
 	id := -1
 	var err error
 	var opts osuapi.GetBeatmapsOpts
-
 
 	if beatmapSetID == 1 {
 		id, err = getBeatmapSetID(m.Content)
