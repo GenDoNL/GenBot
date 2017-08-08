@@ -15,7 +15,7 @@ func meIrlCommand(s *discordgo.Session, msg MessageData, serverData *ServerData)
 	if res, ok := serverData.meIrlCommands[msg.Author.ID]; ok {
 		_, _ = s.ChannelMessageSend(msg.ChannelID, res.Content)
 	} else {
-		_, _ = s.ChannelMessageSend(msg.ChannelID, "Sorry, you do not have a meIrlCommand. ")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Sorry, you do not have a me_irl. ")
 	}
 }
 

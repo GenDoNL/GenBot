@@ -36,13 +36,13 @@ type ServerData struct {
 	Commanders    map[string]bool         `json:"commanders"`
 	Channels      map[string]*ChannelData `json:"channels"`
 	Commands      map[string]*CommandData `json:"commands"`
-	meIrlCommands map[string]*MeIrlData   `json:"meIrlCommand"`
+	meIrlCommands map[string]*MeIrlData   `json:"me_irl"`
 	Key           string                  `json:"Key"`
 }
 
 // ChannelData is the data which is saved for every channel
 type ChannelData struct {
-	ID     string   `json:"ID"`
+	ID     string   `json:"id"`
 	Albums []string `json:"albums"`
 }
 
@@ -88,15 +88,18 @@ func setUp() {
 	}
 
 	PruneCommands = map[string]func(*discordgo.Session, MessageData, *ServerData){
-		"prune": pruneCommand,
+		"prune":       pruneCommand,
 	}
 
 	DefaultCommands = map[string]func(*discordgo.Session, MessageData, *ServerData){
 		"i":           getImageCommand,
 		"image":       getImageCommand,
-		"meIrl":       meIrlCommand,
+		"me_irl":      meIrlCommand,
 		"help":        helpCommand,
+		"info":        helpCommand,
 		"commandlist": commandListCommands,
+		"commands":    commandListCommands,
+		"cmds":        commandListCommands,
 	}
 
 	// Set up the cache so we do not have to make multiple API calls for the same album.
