@@ -36,7 +36,7 @@ type ServerData struct {
 	Commanders    map[string]bool         `json:"commanders"`
 	Channels      map[string]*ChannelData `json:"channels"`
 	Commands      map[string]*CommandData `json:"commands"`
-	meIrlCommands map[string]*MeIrlData   `json:"meIrl"`
+	meIrlCommands map[string]*MeIrlData   `json:"meIrlCommand"`
 	Key           string                  `json:"Key"`
 }
 
@@ -46,7 +46,7 @@ type ChannelData struct {
 	Albums []string `json:"albums"`
 }
 
-// MeIrlData is the data which is saved for every meIrl
+// MeIrlData is the data which is saved for every meIrlCommand
 type MeIrlData struct {
 	UserID   string `json:"id"`
 	Nickname string `json:"nickname"`
@@ -73,28 +73,30 @@ type MessageData struct {
 func setUp() {
 	// Set up all the commands
 	AdminCommands = map[string]func(*discordgo.Session, MessageData, *ServerData){
-		"addcommand":   addCommand,
-		"delcommand":   delCommand,
-		"addcommander": addCommander,
-		"delcommander": delCommander,
-		"setkey":       setKey,
-		"addalbum":     addAlbum,
-		"delalbum":     delAlbum,
-		"forcereload":  forceGetAlbum,
-		"addme_irl":    addMeIrl,
-		"delme_irl":    delMeIrl,
-		"lock":         lockChannel,
-		"unlock":       unlockChannel,
+		"addcommand":   addCommandCommand,
+		"delcommand":   delCommandCommand,
+		"addcommander": addCommanderCommand,
+		"delcommander": delCommanderCommand,
+		"setkey":       setKeyCommand,
+		"addalbum":     addAlbumCommand,
+		"delalbum":     delAlbumCommand,
+		"forcereload":  forceGetAlbumCommand,
+		"addme_irl":    addMeIrlCommand,
+		"delme_irl":    delMeIrlCommand,
+		"lock":         lockChannelCommand,
+		"unlock":       unlockChannelCommand,
 	}
 
 	PruneCommands = map[string]func(*discordgo.Session, MessageData, *ServerData){
-		"prune": prune,
+		"pruneCommand": pruneCommand,
 	}
 
 	DefaultCommands = map[string]func(*discordgo.Session, MessageData, *ServerData){
-		"i":      getImage,
-		"image":  getImage,
-		"meIrl": meIrl,
+		"i":            getImageCommand,
+		"image":        getImageCommand,
+		"meIrl":        meIrlCommand,
+		"help":         helpCommand,
+		"commandlist":	commandListCommands,
 	}
 
 	// Set up the cache so we do not have to make multiple API calls for the same album.

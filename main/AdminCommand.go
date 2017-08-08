@@ -8,13 +8,13 @@ import (
 
 // Deletes a commander from the list of commanders.
 // First argument should be a mention to the person who should be deleted.
-func delCommander(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+func delCommanderCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commanders) == 0 {
 		serverData.Commanders = make(map[string]bool)
 	}
 
 	if len(msg.Content) == 0 {
-		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `"+serverData.Key+"delCommander <@User> `.")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `"+serverData.Key+"delCommanderCommand <@User> `.")
 		return
 	}
 
@@ -32,13 +32,13 @@ func delCommander(s *discordgo.Session, msg MessageData, serverData *ServerData)
 
 // Add a commander to the list of commanders.
 // First argument should be a mention to the person who should be added.
-func addCommander(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+func addCommanderCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commanders) == 0 {
 		serverData.Commanders = make(map[string]bool)
 	}
 
 	if len(msg.Content) == 0 {
-		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `"+serverData.Key+"addCommander <@User> `.")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Usage: `"+serverData.Key+"addCommanderCommand <@User> `.")
 		return
 	}
 
@@ -56,7 +56,7 @@ func addCommander(s *discordgo.Session, msg MessageData, serverData *ServerData)
 }
 
 // Adds an album to the list of albums.
-func addAlbum(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+func addAlbumCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Channels) == 0 {
 		serverData.Channels = make(map[string]*(ChannelData))
 	}
@@ -80,7 +80,7 @@ func addAlbum(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 }
 
 // Refresh the data of the album which is cached.
-func forceGetAlbum(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+func forceGetAlbumCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Channels) == 0 {
 		serverData.Channels = make(map[string]*(ChannelData))
 	}
@@ -107,7 +107,7 @@ func deleteAlbums(albumList []string, str string) []string {
 }
 
 // Remove a specific album from the list of albums.
-func delAlbum(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+func delAlbumCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commands) == 0 {
 		serverData.Commands = make(map[string]*(CommandData))
 	}
@@ -122,7 +122,7 @@ func delAlbum(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 // Add a command to the list  of commands.
 // First argument should be the name, the rest should be the content.
 // Will overwrite existing commands!
-func addCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+func addCommandCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commands) == 0 {
 		serverData.Commands = make(map[string]*(CommandData))
 	}
@@ -138,7 +138,7 @@ func addCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 // Removes a command from the list of commands
 // First argument should be the name of the command that should be removed
 // Nothing happens if command is unknown.
-func delCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+func delCommandCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commands) == 0 {
 		serverData.Commands = make(map[string]*(CommandData))
 	}
@@ -156,7 +156,7 @@ func delCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 
 // Change the command key of the server.
 // Key should be the first argument and only 1 char long.
-func setKey(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+func setKeyCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Commands) == 0 {
 		serverData.Commands = make(map[string]*(CommandData))
 	}
@@ -171,8 +171,8 @@ func setKey(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 
 }
 
-// Remove a meIrl command from a specific person.
-func delMeIrl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+// Remove a meIrlCommand command from a specific person.
+func delMeIrlCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	usage := "Usage: `" + msg.Key + "delme_irl <@User> `"
 
 	if len(msg.Content) < 1 {
@@ -196,11 +196,11 @@ func delMeIrl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	}
 	writeServerData()
 
-	_, _ = s.ChannelMessageSend(msg.ChannelID, "Removed "+msg.Key+"meIrl Command.")
+	_, _ = s.ChannelMessageSend(msg.ChannelID, "Removed "+msg.Key+"meIrlCommand Command.")
 }
 
-// Add a meIrl command from a specific person
-func addMeIrl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+// Add a meIrlCommand command from a specific person
+func addMeIrlCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	usage := "Usage: `" + msg.Key + "addme_irl <@User> <Nickname> <Content> `"
 	if len(msg.Content) < 3 {
 		_, _ = s.ChannelMessageSend(msg.ChannelID, usage)
@@ -231,7 +231,7 @@ func addMeIrl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 }
 
 // Lock a channel, so the @everyone role won't be able to talk in the channel.
-func lockChannel(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+func lockChannelCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 
 	//get channel object
 	ch, err := s.Channel(msg.ChannelID)
@@ -271,7 +271,7 @@ func lockChannel(s *discordgo.Session, msg MessageData, serverData *ServerData) 
 }
 
 // Unlock the channel, so the @everyone role will be allowed to talk again.
-func unlockChannel(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+func unlockChannelCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 
 	//get channel object
 	ch, err := s.Channel(msg.ChannelID)

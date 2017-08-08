@@ -5,20 +5,23 @@ import (
 	"math/rand"
 
 	"time"
+	"fmt"
+	"reflect"
+	"strings"
 )
 
-// Retrieves the meIrl of a given user.
-func meIrl(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+// Retrieves the meIrlCommand of a given user.
+func meIrlCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if res, ok := serverData.meIrlCommands[msg.Author.ID]; ok {
 		_, _ = s.ChannelMessageSend(msg.ChannelID, res.Content)
 	} else {
-		_, _ = s.ChannelMessageSend(msg.ChannelID, "Sorry, you do not have a meIrl. ")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Sorry, you do not have a meIrlCommand. ")
 	}
 }
 
 // Handles the i or image command.
 // Checks whether an album is actually in cache before making an imgur API call.
-func getImage(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+func getImageCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	if len(serverData.Channels) == 0 {
 		serverData.Channels = make(map[string]*(ChannelData))
 	}
@@ -26,8 +29,8 @@ func getImage(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 	// Check there is server data for the given channel and check if there is at least 1 album.
 	if channel, ok := serverData.Channels[msg.ChannelID]; ok && len(channel.Albums) > 0 {
 		// Get a random index and get the Album ID on that index.
-		nmbr := rand.Intn(time.Now().Nanosecond()) % len(channel.Albums)
-		id := channel.Albums[nmbr]
+		randomImageID := rand.Intn(time.Now().Nanosecond()) % len(channel.Albums)
+		id := channel.Albums[randomImageID]
 
 		// Get the data from the cache.
 		data, ok := AlbumCache[id]
@@ -55,6 +58,39 @@ func getImage(s *discordgo.Session, msg MessageData, serverData *ServerData) {
 
 }
 
-func help(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+// Send a private message with the basic info of the bot
+func helpCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+	channel, err := s.UserChannelCreate(msg.Author.ID)
+	if err != nil {
+		fmt.Println("Unable to open private channel with user, ", msg.Author.ID)
+	}
 
+	s.ChannelMessageSend(channel.ID,
+		"Heya, This is OwOBot written by GenDoNL. \n" +
+		"For the list of commands use **" + serverData.Key + "commandlist** in the server. \n\n" +
+		"The source code of the bot can be found here: https://github.com/GenDoNL/GoDiscordBot")
+}
+
+// Get all the message
+func commandListCommands(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+	channel, err := s.UserChannelCreate(msg.Author.ID)
+	if err != nil {
+		fmt.Println("Unable to open private channel with user, ", msg.Author.ID)
+	}
+
+	keys := reflect.ValueOf(serverData.Commands).MapKeys()
+	strkeys := make([]string, len(keys))
+
+	for i := 0; i < len(keys); i++ {
+		strkeys[i] = keys[i].String()
+	}
+
+	message := strings.Join(strkeys, ", ")
+
+	if len(message) > 1950 {
+		message = message[0:1950] + "...truncated"
+	}
+
+	s.ChannelMessageSend(channel.ID,
+		"```" + message + " ```")
 }
