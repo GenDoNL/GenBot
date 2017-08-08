@@ -36,7 +36,7 @@ type ServerData struct {
 	Commanders    map[string]bool         `json:"commanders"`
 	Channels      map[string]*ChannelData `json:"channels"`
 	Commands      map[string]*CommandData `json:"commands"`
-	meIrlCommands map[string]*MeIrlData   `json:"me_irl"`
+	MeIrlCommands map[string]*MeIrlData   `json:"me_irl"`
 	Key           string                  `json:"Key"`
 }
 

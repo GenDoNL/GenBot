@@ -187,9 +187,9 @@ func delMeIrlCommand(s *discordgo.Session, msg MessageData, serverData *ServerDa
 		return
 	}
 
-	if meIrl, ok := serverData.meIrlCommands[id]; ok {
+	if meIrl, ok := serverData.MeIrlCommands[id]; ok {
 		user := meIrl.Nickname + "_irl"
-		delete(serverData.meIrlCommands, id)
+		delete(serverData.MeIrlCommands, id)
 		if _, ok := serverData.Commands[user]; ok {
 			delete(serverData.Commands, user)
 		}
@@ -220,11 +220,11 @@ func addMeIrlCommand(s *discordgo.Session, msg MessageData, serverData *ServerDa
 	command := nick + "_irl"
 	createCommand(serverData, command, content)
 
-	if len(serverData.meIrlCommands) == 0 {
-		serverData.meIrlCommands = make(map[string]*(MeIrlData))
+	if len(serverData.MeIrlCommands) == 0 {
+		serverData.MeIrlCommands = make(map[string]*(MeIrlData))
 	}
 
-	serverData.meIrlCommands[id] = &MeIrlData{id, nick, content}
+	serverData.MeIrlCommands[id] = &MeIrlData{id, nick, content}
 	writeServerData()
 
 	_, _ = s.ChannelMessageSend(msg.ChannelID, "Added "+msg.Key+command+".")

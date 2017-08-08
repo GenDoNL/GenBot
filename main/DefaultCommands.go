@@ -12,7 +12,7 @@ import (
 
 // Retrieves the meIrlCommand of a given user.
 func meIrlCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
-	if res, ok := serverData.meIrlCommands[msg.Author.ID]; ok {
+	if res, ok := serverData.MeIrlCommands[msg.Author.ID]; ok {
 		_, _ = s.ChannelMessageSend(msg.ChannelID, res.Content)
 	} else {
 		_, _ = s.ChannelMessageSend(msg.ChannelID, "Sorry, you do not have a me_irl. ")
