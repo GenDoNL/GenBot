@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strings"
 	"time"
+	"strconv"
 )
 
 // Retrieves the meIrlCommand of a given user.
@@ -55,6 +56,21 @@ func getImageCommand(s *discordgo.Session, msg MessageData, serverData *ServerDa
 	} else {
 		_, _ = s.ChannelMessageSend(msg.ChannelID, "This channel does not have any albums, add an album using `"+serverData.Key+"addalbum <AlbumID> `.")
 	}
+
+}
+
+func rollCommand(s *discordgo.Session, msg MessageData, serverData *ServerData) {
+	var maxRoll int64 = 100
+
+	if len(msg.Content) > 0 {
+		newMaxRoll, err := strconv.ParseInt(msg.Content[0], 10, 64)
+		if err == nil && newMaxRoll > 0{
+			maxRoll = newMaxRoll
+		}
+	}
+
+	rand.Seed(time.Now().UTC().UnixNano())
+	_, _ = s.ChannelMessageSend(msg.ChannelID, strconv.FormatInt(rand.Int63n(maxRoll + 1), 10))
 
 }
 
