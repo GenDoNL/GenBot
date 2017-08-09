@@ -95,6 +95,7 @@ func setUp() {
 		"i":           getImageCommand,
 		"image":       getImageCommand,
 		"me_irl":      meIrlCommand,
+		"roll":		   rollCommand,
 		"help":        helpCommand,
 		"info":        helpCommand,
 		"commandlist": commandListCommands,
