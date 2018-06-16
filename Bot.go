@@ -5,6 +5,7 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/koffeinsource/go-imgur"
 	"github.com/op/go-logging"
 	"os"
 )
@@ -19,6 +20,7 @@ var format = logging.MustStringFormatter(
 type Config struct {
 	BotToken     string `json:"bottoken"`
 	OsuToken     string `json:"osutoken"`
+	ImgurToken   string `json:"imgurtoken"`
 	DataLocation string `json:"datalocation"`
 }
 
@@ -47,8 +49,12 @@ var (
 	BotID      string
 	BotConfig  Config
 
-	Servers map[string]*ServerData
-	Modules []Module
+	Servers   map[string]*ServerData
+	Modules   []Module
+	CmdModule CommandModule
+
+	AlbumCache map[string]*imgur.AlbumInfo
+	imgClient  *imgur.Client
 )
 
 // ServerData is the data which is saved for every server the bot is in.
@@ -101,7 +107,7 @@ func main() {
 
 func setupModules() {
 	Modules = []Module{
-		&CommandModule{},
+		&CmdModule,
 		&OsuModule{},
 	}
 
@@ -157,7 +163,7 @@ func initializeBot() {
 // message is created on any channel that the autenticated bot has access to.
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
-	if m.Author.ID == BotID ||len(m.Content) < 1 {
+	if m.Author.ID == BotID || len(m.Content) < 1 {
 		return
 	}
 

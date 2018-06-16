@@ -1,9 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"github.com/koffeinsource/go-imgur"
+
+	"fmt"
+	"math/rand"
+	"net/http"
+	"sort"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type CommandModule struct {
@@ -11,6 +18,13 @@ type CommandModule struct {
 }
 
 func (cmd *CommandModule) setup() {
+	imgClient = new(imgur.Client)
+	imgClient.HTTPClient = new(http.Client)
+	imgClient.Log = log
+	imgClient.ImgurClientID = BotConfig.ImgurToken
+
+	AlbumCache = make(map[string]*imgur.AlbumInfo)
+
 	cmd.DefaultCommands = map[string]Command{}
 
 	addCommand := Command{
@@ -42,7 +56,7 @@ func (cmd *CommandModule) setup() {
 
 	addMeIrlCommand := Command{
 		Name:        "addme_irl",
-		Description: "tbw",
+		Description: "Add a me_irl",
 		Usage:       "Usage: `%saddme_irl <@User> <Nickname> <Content>`",
 		Permission:  discordgo.PermissionManageServer,
 		Execute:     addMeIrlCommand,
@@ -52,7 +66,7 @@ func (cmd *CommandModule) setup() {
 
 	delMeIrlCommand := Command{
 		Name:        "delme_irl",
-		Description: "tbw",
+		Description: "Delete a me_irl",
 		Usage:       "Usage: `%sdelme_irl <@User>`",
 		Permission:  discordgo.PermissionManageServer,
 		Execute:     delMeIrlCommand,
@@ -97,12 +111,12 @@ func (cmd *CommandModule) setup() {
 	cmd.DefaultCommands["delalbum"] = delAlbumCommand
 
 	addCommanderCommand := Command{
-		Name:        "addcommander",
+		Name: "addcommander",
 		Description: "This command adds a user as commander. Being a commander overwrites " +
 			"the full permission system of the boot and will allow a user to execute any command.",
-		Usage:       "Usage: `%saddcommander <@user>`",
-		Permission:  discordgo.PermissionManageServer,
-		Execute:     addCommanderCommand,
+		Usage:      "Usage: `%saddcommander <@user>`",
+		Permission: discordgo.PermissionManageServer,
+		Execute:    addCommanderCommand,
 	}
 	cmd.DefaultCommands["addcommander"] = addCommanderCommand
 
@@ -114,6 +128,64 @@ func (cmd *CommandModule) setup() {
 		Execute:     delCommanderCommand,
 	}
 	cmd.DefaultCommands["delcommander"] = delCommanderCommand
+
+	pruneCommand := Command{
+		Name: "prune",
+		Description: "This command prunes messages up to the provided amount. " +
+			"If a user is mentioned, the command will only prune messages sent by this user.",
+		Usage:      "Usage: `%sprune <amount(1-100)> <@user(optional, multiple)>`",
+		Permission: discordgo.PermissionManageMessages,
+		Execute:    pruneCommand,
+	}
+	cmd.DefaultCommands["prune"] = pruneCommand
+
+	imageCommand := Command{
+		Name:        "image",
+		Description: "This command sends a random image from an album added by `addalbum`",
+		Usage:       "Usage: `%si`",
+		Permission:  discordgo.PermissionSendMessages,
+		Execute:     getImageCommand,
+	}
+	cmd.DefaultCommands["i"] = imageCommand
+	cmd.DefaultCommands["image"] = imageCommand
+
+	meirlCommand := Command{
+		Name:        "me_irl",
+		Description: "This commands sends your irl, given that you have an irl. You can add an me_irl by using `addme_irl`",
+		Usage:       "Usage: `%sme_irl`",
+		Permission:  discordgo.PermissionSendMessages,
+		Execute:     meIrlCommand,
+	}
+	cmd.DefaultCommands["meirl"] = meirlCommand
+	cmd.DefaultCommands["me_irl"] = meirlCommand
+
+	commandListCommand := Command{
+		Name:        "commandlist",
+		Description: "Lists all default commands",
+		Usage:       "Usage: `%scommandlist`",
+		Permission:  discordgo.PermissionSendMessages,
+		Execute:     commandListCommands,
+	}
+	cmd.DefaultCommands["commandlist"] = commandListCommand
+	cmd.DefaultCommands["commands"] = commandListCommand
+
+	helpCommand := Command{
+		Name:        "help",
+		Description: "Help provides you with more information about any default command.",
+		Usage:       "Usage: `%shelp <command name>`",
+		Permission:  discordgo.PermissionSendMessages,
+		Execute:     helpCommand,
+	}
+	cmd.DefaultCommands["help"] = helpCommand
+
+	rolLCommand := Command{
+		Name:        "roll",
+		Description: "Rolls a random number between 0 and the upper bound provided (0 and the upper bound included). Upper bound defaults to 100.",
+		Usage:       "Usage: `%sroll <upper bound(optional)>`",
+		Permission:  discordgo.PermissionSendMessages,
+		Execute:     rollCommand,
+	}
+	cmd.DefaultCommands["roll"] = rolLCommand
 }
 
 func (cmd *CommandModule) execute(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -140,6 +212,8 @@ func (cmd *CommandModule) execute(s *discordgo.Session, m *discordgo.MessageCrea
 		s.ChannelMessageSend(m.ChannelID, cmd.Content)
 	}
 }
+
+///// Admin Commands /////
 
 // Add a command to the list  of commands.
 // First argument should be the name, the rest should be the content.
@@ -333,7 +407,6 @@ func addAlbumCommand(command Command, s *discordgo.Session, msg SentMessageData,
 	_, _ = s.ChannelMessageSend(msg.ChannelID, "Added album **"+msg.Content[0]+"** to album list.")
 }
 
-
 // Helper function to actually remove the albums from the list.
 func deleteAlbums(albumList []string, str string) []string {
 	list := albumList
@@ -359,11 +432,10 @@ func delAlbumCommand(command Command, s *discordgo.Session, msg SentMessageData,
 		return
 	}
 
-	if channel, ok := data.Channels[msg.ChannelID];
-		ok && len(channel.Albums) > 0 {
-			data.Channels[msg.ChannelID].Albums = deleteAlbums(data.Channels[msg.ChannelID].Albums, msg.Content[0])
-			writeServerData()
-			result = fmt.Sprintf("Removed **%s** from the list of albums.", msg.Content[0])
+	if channel, ok := data.Channels[msg.ChannelID]; ok && len(channel.Albums) > 0 {
+		data.Channels[msg.ChannelID].Albums = deleteAlbums(data.Channels[msg.ChannelID].Albums, msg.Content[0])
+		writeServerData()
+		result = fmt.Sprintf("Removed **%s** from the list of albums.", msg.Content[0])
 	}
 
 	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
@@ -427,4 +499,163 @@ func addCommanderCommand(command Command, s *discordgo.Session, msg SentMessageD
 	result = fmt.Sprintf("Added <@%s> as commander.", userID)
 	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
 
+}
+
+///// Moderator Commands /////
+
+// Handles pruning of messages
+func pruneCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+	var result string
+
+	if len(msg.Content) == 0 {
+		result = fmt.Sprintf(command.Usage, data.Key)
+		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		return
+	}
+
+	amount, err := strconv.Atoi(msg.Content[0])
+
+	if err != nil || amount < 1 || amount > 100 {
+		result = fmt.Sprintf(command.Usage, data.Key)
+		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		return
+	}
+
+	// Retrieves a list of previously sent messages, up to `amount`
+	msgList, _ := s.ChannelMessages(msg.ChannelID, amount, msg.MessageID, "", "")
+
+	var count = 0
+	var msgID []string
+
+	// Get the list of messages you want to remove.
+	for _, x := range msgList {
+		// Check if there was an user specified to be pruned, if so only prune that user.
+		if len(msg.Mentions) == 0 || userInSlice(x.Author.ID, msg.Mentions) {
+			count++
+			msgID = append(msgID, x.ID)
+		}
+	}
+
+	// Remove the messages
+	s.ChannelMessagesBulkDelete(msg.ChannelID, msgID)
+
+	// Send a conformation.
+	result = fmt.Sprintf("Pruned **%s** message(s).", strconv.Itoa(count))
+	_, _ = s.ChannelMessageSend(msg.ChannelID, "Pruned **"+strconv.Itoa(count)+"** message(s).")
+
+}
+
+///// Default Commands /////
+
+// Handles the i or image command.
+// Checks whether an album is actually in cache before making an imgur API call.
+func getImageCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+	checkChannelsMap(data)
+
+	var result string
+
+	// Check there is server data for the given channel and check if there is at least 1 album.
+	if channel, ok := data.Channels[msg.ChannelID]; ok && len(channel.Albums) > 0 {
+		// Get a random index and get the Album ID on that index.
+		randomImageID := rand.Intn(time.Now().Nanosecond()) % len(channel.Albums)
+		id := channel.Albums[randomImageID]
+
+		// Get the data from the cache.
+		data, ok := AlbumCache[id]
+
+		// If album is not already in cache, retrieve it from the Imgur servers.
+		if !ok {
+			var err error
+			data, _, err = imgClient.GetAlbumInfo(id)
+			if err != nil {
+				result = fmt.Sprintf("Something went wrong while trying to retrieve an image, maybe the Imgur API is down or **%s** is not an album?", id)
+				s.ChannelMessageSend(msg.ChannelID, result)
+				return
+			}
+			AlbumCache[id] = data
+
+		}
+		// Get a random image from the album and get the link of said image.
+		rndImg := rand.Intn(time.Now().Nanosecond()) % len(data.Images)
+		linkToImg := data.Images[rndImg].Link
+
+		s.ChannelMessageSend(msg.ChannelID, linkToImg)
+	} else {
+		result = fmt.Sprintf("This channel does not have any albums, add an album using `%saddalbum <AlbumID> `.", data.Key)
+		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+	}
+}
+
+// Retrieves the meIrlCommand of a given user.
+func meIrlCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+	var result string
+
+	if res, ok := data.MeIrlData[msg.Author.ID]; ok {
+		result = res.Content
+	} else {
+		result = "I sincerely apologize, you do not seem to have a me_irl."
+	}
+
+	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+}
+
+func rollCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+	var maxRoll int64 = 100
+
+	if len(msg.Content) > 0 {
+		newMaxRoll, err := strconv.ParseInt(msg.Content[0], 10, 64)
+		if err == nil && newMaxRoll > 0 {
+			maxRoll = newMaxRoll
+		}
+	}
+
+	rand.Seed(time.Now().UTC().UnixNano())
+
+	result := strconv.FormatInt(rand.Int63n(maxRoll+1), 10)
+	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+
+}
+
+// Send a private message with the basic info of the bot
+func helpCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+	if len(msg.Content) == 0 {
+		result := fmt.Sprintf("Heya, This is GenBot written by GenDoNL. \n"+
+			"For the list of commands use **%scommandlist**. \n\n"+
+			"The source code of the bot can be found here: https://github.com/GenDoNL/GenBot", data.Key)
+
+		s.ChannelMessageSend(msg.ChannelID, result)
+		return
+	}
+
+	if command, ok := CmdModule.DefaultCommands[msg.Content[0]]; ok {
+		tempUsage := fmt.Sprintf(command.Usage, msg.Key)
+		result := fmt.Sprintf("***%s***\nDescription: %s\n\n%s\n", command.Name, command.Description, tempUsage)
+		s.ChannelMessageSend(msg.ChannelID, result)
+	}
+}
+
+// Get all the message
+func commandListCommands(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+	result := fmt.Sprintf("This is a list of all default commands, use `%shelp <commandname>` for an in-depth description.\n\n", data.Key)
+
+	var keys []string
+
+	for k := range CmdModule.DefaultCommands {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	for _, v := range keys {
+		if !strings.Contains(result, fmt.Sprintf(" %s,", v)) {
+			result = fmt.Sprintf("%s%s, ", result, v)
+
+		}
+	}
+
+	if len(result) > 1950 {
+		result = result[0:1950] + "...truncated"
+	}
+
+	s.ChannelMessageSend(msg.ChannelID, result)
 }

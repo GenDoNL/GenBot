@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"github.com/bwmarrin/discordgo"
 	"strings"
-	"errors"
 )
 
 // This function parse a discord.MessageCreate into a SentMessageData struct.
@@ -20,6 +20,7 @@ func parseMessage(m *discordgo.MessageCreate) SentMessageData {
 	Content := split[1:]
 	return SentMessageData{Key, Command, Content, m.ID, m.ChannelID, m.Mentions, m.Author}
 }
+
 // This function a string into an ID if the string is a mention.
 func parseMention(str string) (string, error) {
 	if len(str) < 5 || (string(str[0]) != "<" || string(str[1]) != "@" || string(str[len(str)-1]) != ">") {
@@ -35,7 +36,6 @@ func parseMention(str string) (string, error) {
 
 	return res, nil
 }
-
 
 // Returns the ServerData of a server, given a message object.
 func getServerData(s *discordgo.Session, channelID string) *ServerData {
@@ -90,7 +90,7 @@ func getRolePermissions(id string, perms []*discordgo.PermissionOverwrite) (p di
 	return
 }
 
-func getRolePermissionsByName(ch *discordgo.Channel, sv *discordgo.Guild, name string) (p discordgo.PermissionOverwrite, e error)  {
+func getRolePermissionsByName(ch *discordgo.Channel, sv *discordgo.Guild, name string) (p discordgo.PermissionOverwrite, e error) {
 	//get role object for given name
 	role, _ := getRoleByName(name, sv.Roles)
 	return getRolePermissions(role.ID, ch.PermissionOverwrites)
