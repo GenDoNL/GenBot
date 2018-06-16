@@ -17,8 +17,8 @@ var format = logging.MustStringFormatter(
 
 // The Config of the bot
 type Config struct {
-	BotToken string `json:"bottoken"`
-	OsuToken string `json:"osutoken"`
+	BotToken     string `json:"bottoken"`
+	OsuToken     string `json:"osutoken"`
 	DataLocation string `json:"datalocation"`
 }
 
@@ -34,19 +34,18 @@ type SentMessageData struct {
 }
 
 type Command struct {
-	Name string
+	Name        string
 	Description string
-	Usage string
-	Permission int
-	Execute func(Command, *discordgo.Session, SentMessageData, *ServerData)
+	Usage       string
+	Permission  int
+	Execute     func(Command, *discordgo.Session, SentMessageData, *ServerData)
 }
-
 
 // Variables used for Command line parameters
 var (
-	ConfigPath	string
-	BotID		string
-	BotConfig	Config
+	ConfigPath string
+	BotID      string
+	BotConfig  Config
 
 	Servers map[string]*ServerData
 	Modules []Module
@@ -54,12 +53,12 @@ var (
 
 // ServerData is the data which is saved for every server the bot is in.
 type ServerData struct {
-	ID            string                  `json:"id"`
-	Commanders    map[string]bool         `json:"commanders"`
-	Channels      map[string]*ChannelData `json:"channels"`
-	CustomCommands      map[string]*CommandData `json:"commands"`
-	MeIrlData 	  map[string]*MeIrlData   `json:"me_irl"`
-	Key           string                  `json:"Key"`
+	ID             string                  `json:"id"`
+	Commanders     map[string]bool         `json:"commanders"`
+	Channels       map[string]*ChannelData `json:"channels"`
+	CustomCommands map[string]*CommandData `json:"commands"`
+	MeIrlData      map[string]*MeIrlData   `json:"me_irl"`
+	Key            string                  `json:"Key"`
 }
 
 // CommandData is the data which is saved for every command
@@ -168,4 +167,3 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		module.execute(s, m)
 	}
 }
-

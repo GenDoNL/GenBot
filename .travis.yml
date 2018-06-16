@@ -2,7 +2,7 @@ language: go
 
 matrix:
   include:
-    - go: 1.10
+    - go: "1.10"
     
 # Install all external dependencies, ensuring they are updated.
 install:
@@ -10,6 +10,8 @@ install:
 - go get github.com/koffeinsource/go-imgur
 - go get github.com/koffeinsource/go-klogger
 - go get github.com/thehowl/go-osuapi
+- go get github.com/lib/pq
+- go get github.com/op/go-logging
 
 script:
 - go test -v ./...

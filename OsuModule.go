@@ -8,7 +8,7 @@ import (
 )
 
 type OsuModule struct {
-	test string
+	test      string
 	osuClient osuapi.Client
 }
 
@@ -26,7 +26,7 @@ func (osu *OsuModule) execute(s *discordgo.Session, m *discordgo.MessageCreate) 
 	beatmapSetID := strings.Count(m.Content, beatMapSetString)
 	beatmapID := strings.Count(m.Content, beatMapString)
 	newSiteBeatmapID := strings.Count(m.Content, newSiteBeatMapString)
-	if beatmapSetID + beatmapID + newSiteBeatmapID != 1 {
+	if beatmapSetID+beatmapID+newSiteBeatmapID != 1 {
 		return
 	}
 
@@ -45,7 +45,7 @@ func (osu *OsuModule) execute(s *discordgo.Session, m *discordgo.MessageCreate) 
 	}
 
 	if err != nil {
-		log.Errorf("Unable to parse to beatmap: \"%s\"", m.Content )
+		log.Errorf("Unable to parse to beatmap: \"%s\"", m.Content)
 		return
 	}
 
@@ -81,10 +81,9 @@ func getBeatmapID(content string, filter string) (osuapi.GetBeatmapsOpts, error)
 	return opts, err
 }
 
-
 func getNewSiteBeatMapID(content string) (osuapi.GetBeatmapsOpts, error) {
 	idString := strings.Split(content, "/")
-	beatMapID, err := strconv.Atoi(idString[len(idString) - 1])
+	beatMapID, err := strconv.Atoi(idString[len(idString)-1])
 
 	opts := osuapi.GetBeatmapsOpts{BeatmapID: beatMapID}
 	return opts, err

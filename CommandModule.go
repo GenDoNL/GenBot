@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"strings"
 )
 
@@ -11,14 +11,14 @@ type CommandModule struct {
 }
 
 func (cmd *CommandModule) setup() {
-	cmd.DefaultCommands = map[string]Command {}
+	cmd.DefaultCommands = map[string]Command{}
 
-	addCommand := Command {
-		Name: "addcommand",
+	addCommand := Command{
+		Name:        "addcommand",
 		Description: "Add a custom command",
-		Usage: "Usage: `%saddcommand <command name> <response>`",
-		Permission: discordgo.PermissionManageServer,
-		Execute: addCommandCommand,
+		Usage:       "Usage: `%saddcommand <command name> <response>`",
+		Permission:  discordgo.PermissionManageServer,
+		Execute:     addCommandCommand,
 	}
 	cmd.DefaultCommands["addcommand"] = addCommand
 }
@@ -35,13 +35,13 @@ func (cmd *CommandModule) execute(s *discordgo.Session, m *discordgo.MessageCrea
 	if command, ok := cmd.DefaultCommands[msg.Command]; ok {
 		isCommander, ok := serverData.Commanders[m.Author.ID]
 		perm, _ := s.UserChannelPermissions(msg.Author.ID, msg.ChannelID)
-		if  perm & command.Permission == command.Permission || (ok && isCommander) {
+		if perm&command.Permission == command.Permission || (ok && isCommander) {
 			log.Infof("Executing command: %s", command.Name)
 			command.Execute(command, s, msg, serverData)
 		} else {
 			log.Infof("Use of %s command denied for permission level %d", command.Name, perm)
 		}
-	}  else if cmd, ok := serverData.CustomCommands[msg.Command]; ok {
+	} else if cmd, ok := serverData.CustomCommands[msg.Command]; ok {
 		s.ChannelMessageSend(m.ChannelID, cmd.Content)
 	}
 }
