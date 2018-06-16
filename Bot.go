@@ -157,11 +157,11 @@ func initializeBot() {
 // message is created on any channel that the autenticated bot has access to.
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
-	if m.Author.Bot || len(m.Content) < 1 {
+	if m.Author.ID == BotID ||len(m.Content) < 1 {
 		return
 	}
 
-	log.Info("Received: " + m.Content)
+	log.Debug("Received message: " + m.Content)
 
 	for _, module := range Modules {
 		module.execute(s, m)
