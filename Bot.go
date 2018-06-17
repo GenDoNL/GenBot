@@ -11,17 +11,18 @@ import (
 )
 
 // Set up Logger
-var log = logging.MustGetLogger("DiscordBot")
+var log = logging.MustGetLogger("GenBot")
 var format = logging.MustStringFormatter(
 	`%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} %{id:03x}%{color:reset} %{message}`,
 )
 
 // The Config of the bot
 type Config struct {
-	BotToken     string `json:"bottoken"`
-	OsuToken     string `json:"osutoken"`
-	ImgurToken   string `json:"imgurtoken"`
-	DataLocation string `json:"datalocation"`
+	BotToken      string `json:"bottoken"`
+	OsuToken      string `json:"osutoken"`
+	ImgurToken    string `json:"imgurtoken"`
+	SauceNaoToken string `json:"saucenaotoken"`
+	DataLocation  string `json:"datalocation"`
 }
 
 // MessageData is the parsed message, allows for easier access to arguments.
