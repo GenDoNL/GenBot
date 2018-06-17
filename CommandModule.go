@@ -569,6 +569,7 @@ func getImageCommand(command Command, s *discordgo.Session, msg SentMessageData,
 			data, _, err = imgClient.GetAlbumInfo(id)
 			if err != nil {
 				result = fmt.Sprintf("Something went wrong while trying to retrieve an image, maybe the Imgur API is down or **%s** is not an album?", id)
+				log.Error(err)
 				s.ChannelMessageSend(msg.ChannelID, result)
 				return
 			}
