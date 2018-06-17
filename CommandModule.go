@@ -713,7 +713,12 @@ func getSauceCommand(command Command, s *discordgo.Session, msg SentMessageData,
 		return
 	}
 
-	result = fmt.Sprintf("Source found with %s%% similarity: <%s>", sauceResult.Data[0].Header.Similarity, sauceResult.Data[0].Data.ExtUrls[0])
+	similarity, err := strconv.ParseFloat(sauceResult.Data[0].Header.Similarity, 32)
+	if err != nil || similarity < 80.0 {
+		result = fmt.Sprintf("No images found with similarity over 80.")
+	} else {
+		result = fmt.Sprintf("Source found with %v%% similarity: <%s>", similarity, sauceResult.Data[0].Data.ExtUrls[0])
+	}
 	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
 
 }
