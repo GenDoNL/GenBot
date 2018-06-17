@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"github.com/bwmarrin/discordgo"
+	"net/url"
 	"strings"
 )
 
@@ -94,6 +95,16 @@ func getRolePermissionsByName(ch *discordgo.Channel, sv *discordgo.Guild, name s
 	//get role object for given name
 	role, _ := getRoleByName(name, sv.Roles)
 	return getRolePermissions(role.ID, ch.PermissionOverwrites)
+}
+
+// isValidUrl tests a string to determine if it is a url or not.
+func isValidUrl(toTest string) bool {
+	_, err := url.ParseRequestURI(toTest)
+	if err != nil {
+		return false
+	} else {
+		return true
+	}
 }
 
 // Creates a command in the given server given a name and a message.

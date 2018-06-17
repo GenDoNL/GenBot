@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/GenDoNL/saucenao-go"
 	"github.com/bwmarrin/discordgo"
 	"github.com/koffeinsource/go-imgur"
 
@@ -186,6 +187,17 @@ func (cmd *CommandModule) setup() {
 		Execute:     rollCommand,
 	}
 	cmd.DefaultCommands["roll"] = rolLCommand
+
+	sauceCommand := Command{
+		Name:        "sauce",
+		Description: "Provides the source of an image. A direct link to an image should be provided.",
+		Usage:       "Usage: `%ssource <URL>`",
+		Permission:  discordgo.PermissionSendMessages,
+		Execute:     getSauceCommand,
+	}
+	cmd.DefaultCommands["sauce"] = sauceCommand
+	cmd.DefaultCommands["source"] = sauceCommand
+
 }
 
 func (cmd *CommandModule) execute(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -659,4 +671,49 @@ func commandListCommands(command Command, s *discordgo.Session, msg SentMessageD
 	}
 
 	s.ChannelMessageSend(msg.ChannelID, result)
+}
+
+func getSauceCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+	var result string
+	extensions := []string{".jpg", ".jpeg", ".png", ".gif", ".bmp"}
+
+	if len(msg.Content) == 0 {
+		result = fmt.Sprintf(command.Usage, data.Key)
+		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		return
+	}
+
+	if !isValidUrl(msg.Content[0]) {
+		result = fmt.Sprintf("Could not parse command arguments to a URL")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		return
+	}
+
+	hasExtension := false
+	for _, ext := range extensions {
+		if strings.HasSuffix(msg.Content[0], ext) {
+			hasExtension = true
+		}
+	}
+
+	if !hasExtension {
+		result = "URL has a non-supported file extension."
+		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		return
+	}
+
+	sauceClient := saucenao.New(BotConfig.SauceNaoToken)
+
+	sauceResult, err := sauceClient.FromURL(msg.Content[0])
+
+	if err != nil || len(sauceResult.Data) == 0 {
+		result = fmt.Sprintf("Something went wrong while contacting the Saucenao API." +
+			"You could try sourcing your images manually at https://saucenao.com/")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		return
+	}
+
+	result = fmt.Sprintf("Source found with %s%% similarity: <%s>", sauceResult.Data[0].Header.Similarity, sauceResult.Data[0].Data.ExtUrls[0])
+	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+
 }

@@ -12,6 +12,7 @@ install:
 - go get github.com/thehowl/go-osuapi
 - go get github.com/lib/pq
 - go get github.com/op/go-logging
+- go get github.com/GenDoNL/saucenao-go
 
 script:
 - go test -v ./...
