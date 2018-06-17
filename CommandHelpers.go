@@ -2,16 +2,15 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"strings"
 )
 
-// This function parse a discord.MessageCreate into a MessageData struct.
-func parseCommand(m *discordgo.MessageCreate) MessageData {
+// This function parse a discord.MessageCreate into a SentMessageData struct.
+func parseMessage(m *discordgo.MessageCreate) SentMessageData {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println("Error with: `" + m.Content + "`, I should fix dis...")
+			log.Error("Error with: `" + m.Content + "`, I should fix this...")
 		}
 	}()
 
@@ -19,7 +18,7 @@ func parseCommand(m *discordgo.MessageCreate) MessageData {
 	Key := m.Content[:1]
 	Command := strings.ToLower(split[0][1:])
 	Content := split[1:]
-	return MessageData{Key, Command, Content, m.ID, m.ChannelID, m.Mentions, m.Author}
+	return SentMessageData{Key, Command, Content, m.ID, m.ChannelID, m.Mentions, m.Author}
 }
 
 // This function a string into an ID if the string is a mention.
@@ -38,12 +37,6 @@ func parseMention(str string) (string, error) {
 	return res, nil
 }
 
-// Creates a command in the given server given a name and a message.
-func createCommand(data *ServerData, commandName, message string) {
-	data.Commands[commandName] = &CommandData{strings.ToLower(commandName), message}
-	writeServerData()
-}
-
 // Returns the ServerData of a server, given a message object.
 func getServerData(s *discordgo.Session, channelID string) *ServerData {
 	channel, _ := s.Channel(channelID)
@@ -51,7 +44,7 @@ func getServerData(s *discordgo.Session, channelID string) *ServerData {
 	servID := channel.GuildID
 
 	if len(Servers) == 0 {
-		Servers = make(map[string]*(ServerData))
+		Servers = make(map[string]*ServerData)
 	}
 
 	if serv, ok := Servers[servID]; ok {
@@ -95,4 +88,28 @@ func getRolePermissions(id string, perms []*discordgo.PermissionOverwrite) (p di
 	}
 	e = errors.New("Permissions not found in the specified role: " + id)
 	return
+}
+
+func getRolePermissionsByName(ch *discordgo.Channel, sv *discordgo.Guild, name string) (p discordgo.PermissionOverwrite, e error) {
+	//get role object for given name
+	role, _ := getRoleByName(name, sv.Roles)
+	return getRolePermissions(role.ID, ch.PermissionOverwrites)
+}
+
+// Creates a command in the given server given a name and a message.
+func createCommand(data *ServerData, commandName, message string) {
+	data.CustomCommands[commandName] = &CommandData{strings.ToLower(commandName), message}
+	writeServerData()
+}
+
+func checkCommandsMap(data *ServerData) {
+	if len(data.CustomCommands) == 0 {
+		data.CustomCommands = make(map[string]*CommandData)
+	}
+}
+
+func checkChannelsMap(data *ServerData) {
+	if len(data.Channels) == 0 {
+		data.Channels = make(map[string]*ChannelData)
+	}
 }
