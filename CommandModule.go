@@ -170,6 +170,16 @@ func (cmd *CommandModule) setup() {
 	cmd.DefaultCommands["commandlist"] = commandListCommand
 	cmd.DefaultCommands["commands"] = commandListCommand
 
+	customCommandListCommand := Command{
+		Name:        "customcommands",
+		Description: "Lists all the server specific commands",
+		Usage:       "Usage: `%scustomcommands`",
+		Permission:  discordgo.PermissionSendMessages,
+		Execute:     customCommandListCommands,
+	}
+	cmd.DefaultCommands["customcommands"] = customCommandListCommand
+	cmd.DefaultCommands["servercommands"] = customCommandListCommand
+
 	helpCommand := Command{
 		Name:        "help",
 		Description: "Help provides you with more information about any default command.",
@@ -661,17 +671,56 @@ func commandListCommands(command Command, s *discordgo.Session, msg SentMessageD
 
 	for _, v := range keys {
 		if !strings.Contains(result, fmt.Sprintf(" %s,", v)) {
-			result = fmt.Sprintf("%s%s, ", result, v)
+			result = fmt.Sprintf("%s`%s`, ", result, v)
 
 		}
+	}
+
+	result = result[:len(result)-2]
+
+	if len(result) > 1950 {
+		result = result[0:1950] + "...truncated"
+	}
+
+	result = fmt.Sprintf("%s \n\nUse `%scustomcommands` for a list of custom commands.", result, data.Key)
+
+	s.ChannelMessageSend(msg.ChannelID, result)
+}
+
+func customCommandListCommands(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+	var result string
+
+
+	var keys []string
+
+	for k := range data.CustomCommands {
+		keys = append(keys, k)
+	}
+
+	if len(keys) > 0 {
+		result = "This is a list of all custom commands.\n\n"
+
+		sort.Strings(keys)
+
+		for _, v := range keys {
+			if !strings.Contains(result, fmt.Sprintf(" %s,", v)) {
+				result = fmt.Sprintf("%s`%s`, ", result, v)
+			}
+		}
+		result = result[:len(result)-2]
+	} else {
+		result = fmt.Sprintf("There are no custom commands yet. Use `%saddcommand` to add your first command!", data.Key)
 	}
 
 	if len(result) > 1950 {
 		result = result[0:1950] + "...truncated"
 	}
 
+	result = fmt.Sprintf("%s \n\nUse `%scommandlist` for a list of default commands.", result, data.Key)
+
 	s.ChannelMessageSend(msg.ChannelID, result)
 }
+
 
 func getSauceCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
 	var result string
@@ -709,6 +758,7 @@ func getSauceCommand(command Command, s *discordgo.Session, msg SentMessageData,
 	if err != nil || len(sauceResult.Data) == 0 {
 		result = fmt.Sprintf("Something went wrong while contacting the Saucenao API." +
 			"You could try sourcing your images manually at https://saucenao.com/")
+		log.Errorf("%s \n %s", err, sauceResult)
 		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
 		return
 	}
