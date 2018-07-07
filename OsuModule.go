@@ -5,6 +5,7 @@ import (
 	"github.com/thehowl/go-osuapi"
 	"strconv"
 	"strings"
+	"errors"
 )
 
 type OsuModule struct {
@@ -54,13 +55,12 @@ func (osu *OsuModule) execute(s *discordgo.Session, m *discordgo.MessageCreate) 
 		log.Errorf("Something went wrong while trying to retrieve beatmap, %s", err)
 		return
 	}
-
+	
 	result := constructBeatmapMessage(beatmap)
 	s.ChannelMessageSendEmbed(m.ChannelID, &result)
 }
 
 func getBeatmapSetID(content string, filter string) (osuapi.GetBeatmapsOpts, error) {
-	//get beatmap id in the message
 	s := content[(strings.Index(content, filter) + len(filter)):]
 	id := strings.Split(s, " ")[0]
 	beatMapSetID, err := strconv.Atoi(id)
@@ -85,7 +85,9 @@ func getNewSiteBeatMapID(content string) (osuapi.GetBeatmapsOpts, error) {
 	idString := strings.Split(content, "/")
 	beatMapID, err := strconv.Atoi(idString[len(idString)-1])
 
+
 	opts := osuapi.GetBeatmapsOpts{BeatmapID: beatMapID}
+
 	return opts, err
 }
 
@@ -99,7 +101,7 @@ func getBeatMap(osuClient osuapi.Client, opts osuapi.GetBeatmapsOpts) (osuapi.Be
 
 	//check for empty list in case of no beatMaps found
 	if len(beatMaps) == 0 {
-		return beatMap, err
+		return beatMap, errors.New("Beatmap list is empty.")
 	}
 
 	//get the highest difficulty in mapset
