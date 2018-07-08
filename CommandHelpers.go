@@ -109,7 +109,8 @@ func isValidUrl(toTest string) bool {
 
 // Creates a command in the given server given a name and a message.
 func createCommand(data *ServerData, commandName, message string) {
-	data.CustomCommands[commandName] = &CommandData{strings.ToLower(commandName), message}
+	name := strings.ToLower(commandName)
+	data.CustomCommands[name] = &CommandData{name, message}
 	writeServerData()
 }
 

@@ -1,11 +1,11 @@
 package main
 
 import (
+	"errors"
 	"github.com/bwmarrin/discordgo"
 	"github.com/thehowl/go-osuapi"
 	"strconv"
 	"strings"
-	"errors"
 )
 
 type OsuModule struct {
@@ -55,7 +55,7 @@ func (osu *OsuModule) execute(s *discordgo.Session, m *discordgo.MessageCreate) 
 		log.Errorf("Something went wrong while trying to retrieve beatmap, %s", err)
 		return
 	}
-	
+
 	result := constructBeatmapMessage(beatmap)
 	s.ChannelMessageSendEmbed(m.ChannelID, &result)
 }
@@ -84,7 +84,6 @@ func getBeatmapID(content string, filter string) (osuapi.GetBeatmapsOpts, error)
 func getNewSiteBeatMapID(content string) (osuapi.GetBeatmapsOpts, error) {
 	idString := strings.Split(content, "/")
 	beatMapID, err := strconv.Atoi(idString[len(idString)-1])
-
 
 	opts := osuapi.GetBeatmapsOpts{BeatmapID: beatMapID}
 

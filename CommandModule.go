@@ -690,7 +690,6 @@ func commandListCommands(command Command, s *discordgo.Session, msg SentMessageD
 func customCommandListCommands(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
 	var result string
 
-
 	var keys []string
 
 	for k := range data.CustomCommands {
@@ -720,7 +719,6 @@ func customCommandListCommands(command Command, s *discordgo.Session, msg SentMe
 
 	s.ChannelMessageSend(msg.ChannelID, result)
 }
-
 
 func getSauceCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
 	var result string
