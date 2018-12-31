@@ -688,7 +688,7 @@ func commandListCommands(command Command, s *discordgo.Session, msg SentMessageD
 }
 
 func customCommandListCommands(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	var result string
+	var commandList string
 
 	var keys []string
 
@@ -697,25 +697,25 @@ func customCommandListCommands(command Command, s *discordgo.Session, msg SentMe
 	}
 
 	if len(keys) > 0 {
-		result = "This is a list of all custom commands.\n\n"
+		commandList = "This is a list of all custom commands.\n"
 
 		sort.Strings(keys)
 
 		for _, v := range keys {
-			if !strings.Contains(result, fmt.Sprintf(" %s,", v)) {
-				result = fmt.Sprintf("%s`%s`, ", result, v)
-			}
+			commandList = fmt.Sprintf("%s\n %s - %s", commandList, v, data.CustomCommands[v].Content)
 		}
-		result = result[:len(result)-2]
+
 	} else {
-		result = fmt.Sprintf("There are no custom commands yet. Use `%saddcommand` to add your first command!", data.Key)
+		commandList = fmt.Sprintf("There are no custom commands yet. Use `%saddcommand` to add your first command!", data.Key)
 	}
 
-	if len(result) > 1950 {
-		result = result[0:1950] + "...truncated"
-	}
 
-	result = fmt.Sprintf("%s \n\nUse `%scommandlist` for a list of default commands.", result, data.Key)
+
+	commandList = fmt.Sprintf("%s \n\nUse `%scommandlist` for a list of default commands.", commandList, data.Key)
+
+	url := HServer.updateServerCommands(data.ID, commandList)
+
+	result := fmt.Sprintf("The full list of commands for this server can be found here: %s", url)
 
 	s.ChannelMessageSend(msg.ChannelID, result)
 }

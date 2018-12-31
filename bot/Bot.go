@@ -23,6 +23,7 @@ type Config struct {
 	ImgurToken    string `json:"imgurtoken"`
 	SauceNaoToken string `json:"saucenaotoken"`
 	DataLocation  string `json:"datalocation"`
+	WebsiteUrl    string `json:"websiteurl"`
 }
 
 // MessageData is the parsed message, allows for easier access to arguments.
@@ -49,6 +50,7 @@ var (
 	ConfigPath string
 	BotID      string
 	BotConfig  Config
+	HServer *HttpServer
 
 	Servers   map[string]*ServerData
 	Modules   []Module
@@ -140,6 +142,8 @@ func initializeBot() {
 		log.Critical("error obtaining account details,", err)
 		return
 	}
+
+	go HServer.start()
 
 	// Store the account ID for later use.
 	BotID = u.ID
