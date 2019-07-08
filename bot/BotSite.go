@@ -18,6 +18,10 @@ func (h *HttpServer) start() {
 	res = make(map[string]string)
 	http.HandleFunc("/", h.handleServer())
 	http.ListenAndServe(":80", nil)
+
+	for _, v := range Servers {
+		HServer.updateServerCommands(v.ID, v)
+	}
 }
 
 func getUrlFromID(id string) string {
@@ -27,12 +31,12 @@ func getUrlFromID(id string) string {
 
 func (h *HttpServer) updateServerCommands(id string, data *ServerData) string {
 
-	defer func() {
-		if r := recover(); r != nil {
-			log.Error("Error with: `" + data.ID + "`, I should fix this...")
-		}
-	}()
-	
+	//defer func() {
+	//	if r := recover(); r != nil {
+	//		log.Error("Error with: `" + data.ID + "`, I should fix this...")
+	//	}
+	//}()
+
 	url := getUrlFromID(id)
 
 	var keys []string

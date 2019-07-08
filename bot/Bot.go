@@ -129,12 +129,6 @@ func startLogger() {
 	log.Info("Logger Initialized")
 }
 
-func initBotSite() {
-	for _, v := range Servers {
-		HServer.updateServerCommands(v.ID, v)
-	}
-}
-
 func initBot() {
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + BotConfig.BotToken)
@@ -151,7 +145,6 @@ func initBot() {
 	}
 
 	go HServer.start()
-	initBotSite()
 
 	// Store the account ID for later use.
 	BotID = u.ID
