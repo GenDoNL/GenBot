@@ -125,3 +125,23 @@ func checkChannelsMap(data *ServerData) {
 		data.Channels = make(map[string]*ChannelData)
 	}
 }
+
+func findLastMessageWithAttachOrEmbed(s *discordgo.Session, msg SentMessageData, amount int) (result string, e error) {
+	msgList, _ := s.ChannelMessages(msg.ChannelID, amount, msg.MessageID, "", "")
+
+	for _, x := range msgList {
+		if len(x.Embeds) > 0 {
+			result = x.Embeds[0].URL
+			e = nil
+			return
+		} else if len(x.Attachments) > 0 {
+			result = x.Attachments[0].URL
+			e = nil
+			return
+		}
+	}
+
+	result = ""
+	e = errors.New("Unable to find message with attachment or embed")
+	return
+}

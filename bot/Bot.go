@@ -104,14 +104,15 @@ func main() {
 	startLogger()
 	readServerData()
 	setupModules()
-	initializeBot()
+	initBot()
 	return
 }
 
 func setupModules() {
 	Modules = []Module{
 		&CmdModule,
-		&OsuModule{},
+		&ModerationModule{},
+	//	&OsuModule{}, // Temporarily disable osu module until it is configurable
 	}
 
 	for _, module := range Modules {
@@ -128,7 +129,13 @@ func startLogger() {
 	log.Info("Logger Initialized")
 }
 
-func initializeBot() {
+func initBotSite() {
+	for _, v := range Servers {
+		HServer.updateServerCommands(v.ID, v)
+	}
+}
+
+func initBot() {
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + BotConfig.BotToken)
 	if err != nil {
@@ -144,6 +151,7 @@ func initializeBot() {
 	}
 
 	go HServer.start()
+	initBotSite()
 
 	// Store the account ID for later use.
 	BotID = u.ID
@@ -171,8 +179,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == BotID || len(m.Content) < 1 {
 		return
 	}
-
-	log.Debug("Received message: " + m.Content)
 
 	for _, module := range Modules {
 		module.execute(s, m)

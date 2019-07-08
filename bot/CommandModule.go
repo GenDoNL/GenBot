@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -114,7 +113,7 @@ func (cmd *CommandModule) setup() {
 	addCommanderCommand := Command{
 		Name: "addcommander",
 		Description: "This command adds a user as commander. Being a commander overwrites " +
-			"the full permission system of the boot and will allow a user to execute any command.",
+			"the full permission system of the bot and will allow a user to execute any command.",
 		Usage:      "Usage: `%saddcommander <@user>`",
 		Permission: discordgo.PermissionManageServer,
 		Execute:    addCommanderCommand,
@@ -130,15 +129,7 @@ func (cmd *CommandModule) setup() {
 	}
 	cmd.DefaultCommands["delcommander"] = delCommanderCommand
 
-	pruneCommand := Command{
-		Name: "prune",
-		Description: "This command prunes messages up to the provided amount. " +
-			"If a user is mentioned, the command will only prune messages sent by this user.",
-		Usage:      "Usage: `%sprune <amount(1-100)> <@user(optional, multiple)>`",
-		Permission: discordgo.PermissionManageMessages,
-		Execute:    pruneCommand,
-	}
-	cmd.DefaultCommands["prune"] = pruneCommand
+
 
 	imageCommand := Command{
 		Name:        "image",
@@ -189,14 +180,14 @@ func (cmd *CommandModule) setup() {
 	}
 	cmd.DefaultCommands["help"] = helpCommand
 
-	rolLCommand := Command{
+	rollCommand := Command{
 		Name:        "roll",
 		Description: "Rolls a random number between 0 and the upper bound provided (0 and the upper bound included). Upper bound defaults to 100.",
 		Usage:       "Usage: `%sroll <upper bound(optional)>`",
-		Permission:  discordgo.PermissionSendMessages,
+		Permission:  discordgo.PermissionManageMessages,
 		Execute:     rollCommand,
 	}
-	cmd.DefaultCommands["roll"] = rolLCommand
+	cmd.DefaultCommands["roll"] = rollCommand
 
 	sauceCommand := Command{
 		Name:        "sauce",
@@ -222,7 +213,7 @@ func (cmd *CommandModule) execute(s *discordgo.Session, m *discordgo.MessageCrea
 	if command, ok := cmd.DefaultCommands[msg.Command]; ok {
 		isCommander, ok := serverData.Commanders[m.Author.ID]
 		perm, _ := s.UserChannelPermissions(msg.Author.ID, msg.ChannelID)
-		if perm&command.Permission == command.Permission || (ok && isCommander) {
+		if perm & command.Permission == command.Permission || (ok && isCommander) {
 			log.Infof("Executing command: %s", command.Name)
 			command.Execute(command, s, msg, serverData)
 		} else {
@@ -525,47 +516,7 @@ func addCommanderCommand(command Command, s *discordgo.Session, msg SentMessageD
 
 ///// Moderator Commands /////
 
-// Handles pruning of messages
-func pruneCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	var result string
 
-	if len(msg.Content) == 0 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-		return
-	}
-
-	amount, err := strconv.Atoi(msg.Content[0])
-
-	if err != nil || amount < 1 || amount > 100 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-		return
-	}
-
-	// Retrieves a list of previously sent messages, up to `amount`
-	msgList, _ := s.ChannelMessages(msg.ChannelID, amount, msg.MessageID, "", "")
-
-	var count = 0
-	var msgID []string
-
-	// Get the list of messages you want to remove.
-	for _, x := range msgList {
-		// Check if there was an user specified to be pruned, if so only prune that user.
-		if len(msg.Mentions) == 0 || userInSlice(x.Author.ID, msg.Mentions) {
-			count++
-			msgID = append(msgID, x.ID)
-		}
-	}
-
-	// Remove the messages
-	s.ChannelMessagesBulkDelete(msg.ChannelID, msgID)
-
-	// Send a conformation.
-	result = fmt.Sprintf("Pruned **%s** message(s).", strconv.Itoa(count))
-	_, _ = s.ChannelMessageSend(msg.ChannelID, "Pruned **"+strconv.Itoa(count)+"** message(s).")
-
-}
 
 ///// Default Commands /////
 
@@ -577,15 +528,13 @@ func getImageCommand(command Command, s *discordgo.Session, msg SentMessageData,
 	var result string
 
 	// Check there is server data for the given channel and check if there is at least 1 album.
-	if channel, ok := data.Channels[msg.ChannelID]; ok && len(channel.Albums) > 0 {
-		// Get a random index and get the Album ID on that index.
+	if channel, ok := data.Channels[msg.ChannelID]; !ok || len(channel.Albums) <= 0 {
+		result = fmt.Sprintf("This channel does not have any albums, add an album using `%saddalbum <AlbumID> `.", data.Key)
+		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+	} else {
 		randomImageID := rand.Intn(time.Now().Nanosecond()) % len(channel.Albums)
 		id := channel.Albums[randomImageID]
-
-		// Get the data from the cache.
 		data, ok := AlbumCache[id]
-
-		// If album is not already in cache, retrieve it from the Imgur servers.
 		if !ok {
 			var err error
 			data, _, err = imgClient.GetAlbumInfo(id)
@@ -598,14 +547,9 @@ func getImageCommand(command Command, s *discordgo.Session, msg SentMessageData,
 			AlbumCache[id] = data
 
 		}
-		// Get a random image from the album and get the link of said image.
 		rndImg := rand.Intn(time.Now().Nanosecond()) % len(data.Images)
 		linkToImg := data.Images[rndImg].Link
-
 		s.ChannelMessageSend(msg.ChannelID, linkToImg)
-	} else {
-		result = fmt.Sprintf("This channel does not have any albums, add an album using `%saddalbum <AlbumID> `.", data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
 	}
 }
 
@@ -641,15 +585,20 @@ func rollCommand(command Command, s *discordgo.Session, msg SentMessageData, dat
 
 // Send a private message with the basic info of the bot
 func helpCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+	// Default help command
 	if len(msg.Content) == 0 {
+		commandUrl := HServer.updateServerCommands(data.ID, data)
+
 		result := fmt.Sprintf("Heya, This is GenBot written by GenDoNL. \n"+
-			"For the list of commands use **%scommandlist**. \n\n"+
-			"The source code of the bot can be found here: https://github.com/GenDoNL/GenBot", data.Key)
+			"For a list of built-in commands use **%scommandlist**. \n"+
+			"For server specific commands, check out: %s \n\n" +
+			"The source code of the bot can be found here: <https://github.com/GenDoNL/GenBot>", data.Key, commandUrl)
 
 		s.ChannelMessageSend(msg.ChannelID, result)
 		return
 	}
 
+	// Help for a certain command
 	if command, ok := CmdModule.DefaultCommands[msg.Content[0]]; ok {
 		tempUsage := fmt.Sprintf(command.Usage, msg.Key)
 		result := fmt.Sprintf("***%s***\nDescription: %s\n\n%s\n", command.Name, command.Description, tempUsage)
@@ -661,59 +610,11 @@ func helpCommand(command Command, s *discordgo.Session, msg SentMessageData, dat
 func commandListCommands(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
 	result := fmt.Sprintf("This is a list of all default commands, use `%shelp <commandname>` for an in-depth description.\n\n", data.Key)
 
-	var keys []string
-
-	for k := range CmdModule.DefaultCommands {
-		keys = append(keys, k)
-	}
-
-	sort.Strings(keys)
-
-	for _, v := range keys {
-		if !strings.Contains(result, fmt.Sprintf(" %s,", v)) {
-			result = fmt.Sprintf("%s`%s`, ", result, v)
-
-		}
-	}
-
-	result = result[:len(result)-2]
-
-	if len(result) > 1950 {
-		result = result[0:1950] + "...truncated"
-	}
-
-	result = fmt.Sprintf("%s \n\nUse `%scustomcommands` for a list of custom commands.", result, data.Key)
-
 	s.ChannelMessageSend(msg.ChannelID, result)
 }
 
 func customCommandListCommands(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	var commandList string
-
-	var keys []string
-
-	for k := range data.CustomCommands {
-		keys = append(keys, k)
-	}
-
-	if len(keys) > 0 {
-		commandList = "This is a list of all custom commands.\n"
-
-		sort.Strings(keys)
-
-		for _, v := range keys {
-			commandList = fmt.Sprintf("%s\n %s - %s", commandList, v, data.CustomCommands[v].Content)
-		}
-
-	} else {
-		commandList = fmt.Sprintf("There are no custom commands yet. Use `%saddcommand` to add your first command!", data.Key)
-	}
-
-
-
-	commandList = fmt.Sprintf("%s \n\nUse `%scommandlist` for a list of default commands.", commandList, data.Key)
-
-	url := HServer.updateServerCommands(data.ID, commandList)
+	url := HServer.updateServerCommands(data.ID, data)
 
 	result := fmt.Sprintf("The full list of commands for this server can be found here: %s", url)
 
@@ -724,13 +625,21 @@ func getSauceCommand(command Command, s *discordgo.Session, msg SentMessageData,
 	var result string
 	extensions := []string{".jpg", ".jpeg", ".png", ".gif", ".bmp"}
 
+	var url string
+
 	if len(msg.Content) == 0 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-		return
+		res, err := findLastMessageWithAttachOrEmbed(s, msg, 5)
+		if err != nil {
+			result = fmt.Sprintf("Unable to find an image to query.")
+			_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+			return
+		}
+		url = res
+	} else {
+		url = msg.Content[0]
 	}
 
-	if !isValidUrl(msg.Content[0]) {
+	if !isValidUrl(url) {
 		result = fmt.Sprintf("Could not parse command arguments to a URL")
 		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
 		return
@@ -738,7 +647,7 @@ func getSauceCommand(command Command, s *discordgo.Session, msg SentMessageData,
 
 	hasExtension := false
 	for _, ext := range extensions {
-		if strings.HasSuffix(msg.Content[0], ext) {
+		if strings.HasSuffix(url, ext) {
 			hasExtension = true
 		}
 	}
@@ -751,7 +660,7 @@ func getSauceCommand(command Command, s *discordgo.Session, msg SentMessageData,
 
 	sauceClient := saucenao.New(BotConfig.SauceNaoToken)
 
-	sauceResult, err := sauceClient.FromURL(msg.Content[0])
+	sauceResult, err := sauceClient.FromURL(url)
 
 	if err != nil || len(sauceResult.Data) == 0 {
 		result = fmt.Sprintf("Something went wrong while contacting the Saucenao API." +

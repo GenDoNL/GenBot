@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"encoding/base64"
 	"crypto/sha1"
+	"sort"
 )
 
 type HttpServer struct {
@@ -24,9 +25,33 @@ func getUrlFromID(id string) string {
 	return b64[:5]
 }
 
-func (h *HttpServer) updateServerCommands(id string, result string) string {
+func (h *HttpServer) updateServerCommands(id string, data *ServerData) string {
 	url := getUrlFromID(id)
-	res[url] = result
+
+	var keys []string
+
+	for k := range data.CustomCommands {
+		keys = append(keys, k)
+	}
+
+	var commandList string
+
+	if len(keys) > 0 {
+		commandList = "This is a list of all custom commands.\n"
+
+		sort.Strings(keys)
+
+		for _, v := range keys {
+			commandList = fmt.Sprintf("%s\n %s - %s", commandList, v, data.CustomCommands[v].Content)
+		}
+
+	} else {
+		commandList = fmt.Sprintf("There are no custom commands yet. Use `%saddcommand` to add your first command!", data.Key)
+	}
+
+	commandList = fmt.Sprintf("%s \n\nUse %scommandlist for a list of default commands.", commandList, data.Key)
+
+	res[url] = commandList
 	response := fmt.Sprintf("%s/%s", BotConfig.WebsiteUrl, url)
 	return response
 }
