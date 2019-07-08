@@ -16,12 +16,13 @@ var res map[string]string
 
 func (h *HttpServer) start() {
 	res = make(map[string]string)
-	http.HandleFunc("/", h.handleServer())
-	http.ListenAndServe(":80", nil)
 
 	for _, v := range Servers {
 		HServer.updateServerCommands(v.ID, v)
 	}
+
+	http.HandleFunc("/", h.handleServer())
+	http.ListenAndServe(":80", nil)
 }
 
 func getUrlFromID(id string) string {
