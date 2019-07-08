@@ -26,6 +26,13 @@ func getUrlFromID(id string) string {
 }
 
 func (h *HttpServer) updateServerCommands(id string, data *ServerData) string {
+
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("Error with: `" + data.ID + "`, I should fix this...")
+		}
+	}()
+	
 	url := getUrlFromID(id)
 
 	var keys []string
