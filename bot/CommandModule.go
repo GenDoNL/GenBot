@@ -496,7 +496,7 @@ func getSauceCommand(command Command, s *discordgo.Session, msg SentMessageData,
 
 }
 
-// Returns the avatar of an user 
+// Returns the avatar of a user
 func avatarCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
 	var target *discordgo.User
 

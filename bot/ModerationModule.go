@@ -27,7 +27,7 @@ func (cmd *ModerationModule) setup() {
 		Name:        "lock",
 		Description: "This command disallows the `everyone` role to speak in the current channel.",
 		Usage:       "Usage: `%slock`",
-		Permission:  discordgo.PermissionManageServer,
+		Permission:  discordgo.PermissionManageMessages,
 		Execute:     lockChannelCommand,
 	}
 	cmd.ModerationCommands["lock"] = lockCommand
