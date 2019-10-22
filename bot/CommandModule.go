@@ -506,7 +506,7 @@ func avatarCommand(command Command, s *discordgo.Session, msg SentMessageData, d
 		target = msg.Author
 	}
 
-	resultUrl := getAvatarFromUser(target)
+	resultUrl := target.AvatarURL("256")
 	result := NewEmbed().SetAuthorFromUser(target).SetImage(resultUrl)
 
 	_, _ = s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
@@ -532,7 +532,7 @@ func whoIsCommand(command Command, s *discordgo.Session, msg SentMessageData, da
 	// Construct the base embed with user and avatar
 	result := NewEmbed().
 		SetAuthorFromUser(target).
-		SetThumbnail(getAvatarFromUser(target))
+		SetThumbnail(target.AvatarURL("256"))
 
 	// Add nickname to message of the user has a nickname
 	if memberData.Nick != "" {

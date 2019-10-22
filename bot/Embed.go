@@ -176,7 +176,7 @@ func (e *Embed) SetAuthorFromUser(author *discordgo.User) *Embed{
 	)
 
 	name = author.Username
-	iconURL = getAvatarFromUser(author)
+	iconURL = author.AvatarURL("256")
 
 	e.Author = &discordgo.MessageEmbedAuthor{
 		Name:         name,

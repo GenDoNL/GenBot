@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"strings"
 	"unicode"
-	"fmt"
 	"strconv"
 )
 
@@ -168,16 +167,6 @@ func findLastMessageWithAttachOrEmbed(s *discordgo.Session, msg SentMessageData,
 
 	result = ""
 	e = errors.New("Unable to find message with attachment or embed")
-	return
-}
-
-func getAvatarFromUser(user *discordgo.User) (resultUrl string) {
-	resultUrl = "https://cdn.discordapp.com/avatars/"
-
-	targetAvatar := user.Avatar
-	targetID := user.ID
-
-	resultUrl = fmt.Sprintf("%s%s/%s?size=256", resultUrl, targetID, targetAvatar)
 	return
 }
 
