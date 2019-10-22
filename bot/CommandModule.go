@@ -45,15 +45,6 @@ func (cmd *CommandModule) setup() {
 	}
 	cmd.DefaultCommands["delcommand"] = delCommand
 
-	setKeyCommand := Command{
-		Name:        "setkey",
-		Description: "Changes the key the bot listens to",
-		Usage:       "Usage: `%ssetkey <key>` (Note: key should be of length 1)",
-		Permission:  discordgo.PermissionManageServer,
-		Execute:     setKeyCommand,
-	}
-	cmd.DefaultCommands["setkey"] = setKeyCommand
-
 	addMeIrlCommand := Command{
 		Name:        "addme_irl",
 		Description: "Add a me_irl",
@@ -74,24 +65,6 @@ func (cmd *CommandModule) setup() {
 	cmd.DefaultCommands["delmeirl"] = delMeIrlCommand
 	cmd.DefaultCommands["delme_irl"] = delMeIrlCommand
 
-	lockCommand := Command{
-		Name:        "lock",
-		Description: "This command disallows the `everyone` role to speak in the current channel.",
-		Usage:       "Usage: `%slock`",
-		Permission:  discordgo.PermissionManageServer,
-		Execute:     lockChannelCommand,
-	}
-	cmd.DefaultCommands["lock"] = lockCommand
-
-	unlockCommand := Command{
-		Name:        "unlock",
-		Description: "This command allows the `everyone` role to speak in the current channel.",
-		Usage:       "Usage: `%sunlock`",
-		Permission:  discordgo.PermissionManageServer,
-		Execute:     unlockChannelCommand,
-	}
-	cmd.DefaultCommands["unlock"] = unlockCommand
-
 	addAlbumCommand := Command{
 		Name:        "addalbum",
 		Description: "This command adds an album to this channel. Images can be retrieved at random using the `i` or `image` command.",
@@ -109,27 +82,6 @@ func (cmd *CommandModule) setup() {
 		Execute:     delAlbumCommand,
 	}
 	cmd.DefaultCommands["delalbum"] = delAlbumCommand
-
-	addCommanderCommand := Command{
-		Name: "addcommander",
-		Description: "This command adds a user as commander. Being a commander overwrites " +
-			"the full permission system of the bot and will allow a user to execute any command.",
-		Usage:      "Usage: `%saddcommander <@user>`",
-		Permission: discordgo.PermissionManageServer,
-		Execute:    addCommanderCommand,
-	}
-	cmd.DefaultCommands["addcommander"] = addCommanderCommand
-
-	delCommanderCommand := Command{
-		Name:        "delcommander",
-		Description: "This command removes a user as commander.",
-		Usage:       "Usage: `%sdelcommander <@user>`",
-		Permission:  discordgo.PermissionManageServer,
-		Execute:     delCommanderCommand,
-	}
-	cmd.DefaultCommands["delcommander"] = delCommanderCommand
-
-
 
 	imageCommand := Command{
 		Name:        "image",
@@ -151,34 +103,15 @@ func (cmd *CommandModule) setup() {
 	cmd.DefaultCommands["meirl"] = meirlCommand
 	cmd.DefaultCommands["me_irl"] = meirlCommand
 
-	commandListCommand := Command{
-		Name:        "commandlist",
-		Description: "Lists all default commands",
-		Usage:       "Usage: `%scommandlist`",
-		Permission:  discordgo.PermissionSendMessages,
-		Execute:     commandListCommands,
-	}
-	cmd.DefaultCommands["commandlist"] = commandListCommand
-	cmd.DefaultCommands["commands"] = commandListCommand
-
 	customCommandListCommand := Command{
 		Name:        "customcommands",
 		Description: "Lists all the server specific commands",
 		Usage:       "Usage: `%scustomcommands`",
 		Permission:  discordgo.PermissionSendMessages,
-		Execute:     customCommandListCommands,
+		Execute:     customCommandListCommand,
 	}
 	cmd.DefaultCommands["customcommands"] = customCommandListCommand
 	cmd.DefaultCommands["servercommands"] = customCommandListCommand
-
-	helpCommand := Command{
-		Name:        "help",
-		Description: "Help provides you with more information about any default command.",
-		Usage:       "Usage: `%shelp <command name>`",
-		Permission:  discordgo.PermissionSendMessages,
-		Execute:     helpCommand,
-	}
-	cmd.DefaultCommands["help"] = helpCommand
 
 	rollCommand := Command{
 		Name:        "roll",
@@ -199,13 +132,38 @@ func (cmd *CommandModule) setup() {
 	cmd.DefaultCommands["sauce"] = sauceCommand
 	cmd.DefaultCommands["source"] = sauceCommand
 
+	avatarCommand := Command{
+		Name:        "avatar",
+		Description: "Sends the full-size version of the mentioned user's avatar, or the message author if no-one is mentioned.",
+		Usage:       "Usage: `%savatar <@User(Optional)>",
+		Permission:  discordgo.PermissionSendMessages,
+		Execute:     avatarCommand,
+	}
+
+	cmd.DefaultCommands["avatar"] = avatarCommand
+	cmd.DefaultCommands["av"] = avatarCommand
+
+	whoIsCommand := Command{
+		Name:        "whois",
+		Description: "Sends member data of the mentioned user, or the message author if no-one is mentioned.",
+		Usage:       "Usage: `%swhois <@User(Optional)>",
+		Permission:  discordgo.PermissionSendMessages,
+		Execute:     whoIsCommand,
+	}
+
+	cmd.DefaultCommands["whois"] = whoIsCommand
+	cmd.DefaultCommands["who"] = whoIsCommand
 }
 
-func (cmd *CommandModule) execute(s *discordgo.Session, m *discordgo.MessageCreate) {
-	serverData := getServerData(s, m.ChannelID)
+func (cmd *CommandModule) retrieveCommands() map[string]Command {
+	return cmd.DefaultCommands
+}
 
-	msg := parseMessage(m)
+func (cmd *CommandModule) retrieveHelp() string {
+	return ""
+}
 
+func (cmd *CommandModule) execute(s *discordgo.Session, m *discordgo.MessageCreate, msg SentMessageData, serverData *ServerData) {
 	if serverData.Key != msg.Key {
 		return
 	}
@@ -213,14 +171,14 @@ func (cmd *CommandModule) execute(s *discordgo.Session, m *discordgo.MessageCrea
 	if command, ok := cmd.DefaultCommands[msg.Command]; ok {
 		isCommander, ok := serverData.Commanders[m.Author.ID]
 		perm, _ := s.UserChannelPermissions(msg.Author.ID, msg.ChannelID)
-		if perm & command.Permission == command.Permission || (ok && isCommander) {
-			log.Infof("Executing command: %s", command.Name)
+		if perm&command.Permission == command.Permission || (ok && isCommander) {
+			log.Infof("Executing command `%s` in server `%s` ", command.Name, serverData.ID)
 			command.Execute(command, s, msg, serverData)
 		} else {
 			log.Infof("Use of %s command denied for permission level %d", command.Name, perm)
 		}
 	} else if cmd, ok := serverData.CustomCommands[msg.Command]; ok {
-		log.Infof("Executing command: %s, from server: %s", cmd.Name, serverData.ID)
+		log.Infof("Executing custom command `%s` in server `%s` ", cmd.Name, serverData.ID)
 
 		s.ChannelMessageSend(m.ChannelID, cmd.Content)
 	}
@@ -237,8 +195,13 @@ func addCommandCommand(command Command, s *discordgo.Session, msg SentMessageDat
 	var result string
 
 	if len(msg.Content) > 1 {
-		createCommand(data, msg.Content[0], strings.Join(msg.Content[1:], " "))
-		result = fmt.Sprintf("Added **%s** to the list of commands.", msg.Content[0])
+		err := createCommand(data, msg.Content[0], strings.Join(msg.Content[1:], " "))
+
+		if err != nil {
+			result = fmt.Sprintf("Cannot add new commands that contain newlines in the name.")
+		} else {
+			result = fmt.Sprintf("Added **%s** to the list of commands.", msg.Content[0])
+		}
 	} else {
 		result = fmt.Sprintf(command.Usage, data.Key)
 	}
@@ -267,23 +230,6 @@ func delCommandCommand(command Command, s *discordgo.Session, msg SentMessageDat
 	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
 }
 
-// Change the command key of the server.
-// Key should be the first argument and only 1 char long.
-func setKeyCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	var result string
-
-	if len(msg.Content) == 0 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-	} else if len(msg.Content[0]) == 1 {
-		data.Key = msg.Content[0]
-		writeServerData()
-		result = fmt.Sprintf("Changed bot key to **%s**.", msg.Content[0])
-	} else {
-		result = fmt.Sprintf("Key should have a length of **1**")
-	}
-	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-}
-
 // Add a meIrlCommand command from a specific person
 func addMeIrlCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
 	var result string
@@ -306,7 +252,12 @@ func addMeIrlCommand(command Command, s *discordgo.Session, msg SentMessageData,
 	content := strings.Join(msg.Content[2:], " ")
 
 	cmd := nick + "_irl"
-	createCommand(data, cmd, content)
+	err = createCommand(data, cmd, content)
+	if err != nil {
+		result = fmt.Sprintf("Cannot add new commands that contain newlines in the name.")
+		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		return
+	}
 
 	if len(data.MeIrlData) == 0 {
 		data.MeIrlData = make(map[string]*MeIrlData)
@@ -346,53 +297,6 @@ func delMeIrlCommand(command Command, s *discordgo.Session, msg SentMessageData,
 
 	writeServerData()
 	result = fmt.Sprintf("Removed the %sme_irl Command for <@%s>.", msg.Key, id)
-	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-}
-
-// Lock a channel, so the @everyone role won't be able to talk in the channel.
-func lockChannelCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-
-	//get channel object
-	ch, _ := s.Channel(msg.ChannelID)
-	sv, _ := s.Guild(data.ID)
-
-	everyonePerms, err := getRolePermissionsByName(ch, sv, "@everyone")
-
-	//deny sending messages and update it
-	err = s.ChannelPermissionSet(ch.ID, everyonePerms.ID, everyonePerms.Type, everyonePerms.Allow&^0x800, everyonePerms.Deny|0x800)
-
-	var result string
-	if err != nil {
-		result = fmt.Sprintf("Unable to unlock channel, do I have the permissions to manage roles?")
-		log.Errorf("Error unlocking channel: %s", err)
-	} else {
-		result = fmt.Sprintf("This channel has been locked.")
-		log.Infof("Locked channel: %s, in server: %s", msg.ChannelID, data.ID)
-	}
-	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-}
-
-// Unlock the channel, so the @everyone role will be allowed to talk again.
-func unlockChannelCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	//get channel object
-	ch, _ := s.Channel(msg.ChannelID)
-	sv, _ := s.Guild(data.ID)
-
-	everyonePerms, err := getRolePermissionsByName(ch, sv, "@everyone")
-
-	//deny sending messages and update it
-	err = s.ChannelPermissionSet(ch.ID, everyonePerms.ID, everyonePerms.Type, everyonePerms.Allow|0x800, everyonePerms.Deny&^0x800)
-
-	var result string
-
-	if err != nil {
-		result = fmt.Sprintf("Unable to unlock channel, do I have the permissions to manage roles?")
-		log.Errorf("Error unlocking channel: %s", err)
-	} else {
-		result = fmt.Sprintf("This channel has been unlocked.")
-		log.Infof("Unlocked channel: %s, in server: %s", msg.ChannelID, data.ID)
-	}
-
 	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
 }
 
@@ -455,72 +359,9 @@ func delAlbumCommand(command Command, s *discordgo.Session, msg SentMessageData,
 
 }
 
-// Deletes a commander from the list of commanders.
-// First argument should mention the user who should be deleted.
-func delCommanderCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	if len(data.Commanders) == 0 {
-		data.Commanders = make(map[string]bool)
-	}
-
-	var result string
-
-	if len(msg.Content) == 0 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-		return
-	}
-
-	userID, err := parseMention(msg.Content[0])
-
-	if err != nil {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-		return
-	}
-
-	data.Commanders[userID] = false
-	writeServerData()
-	result = fmt.Sprintf("Removed <@%s> as commander.", userID)
-	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-}
-
-// Add a commander to the list of commanders.
-// First argument should mention the user who should be added.
-func addCommanderCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	if len(data.Commanders) == 0 {
-		data.Commanders = make(map[string]bool)
-	}
-
-	var result string
-
-	if len(msg.Content) == 0 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-		return
-	}
-
-	userID, err := parseMention(msg.Content[0])
-
-	if err != nil {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-		return
-	}
-
-	data.Commanders[userID] = true
-	writeServerData()
-	result = fmt.Sprintf("Added <@%s> as commander.", userID)
-	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-
-}
-
-///// Moderator Commands /////
-
-
-
 ///// Default Commands /////
 
-// Handles the i or image command.
+// Handles the image command.
 // Checks whether an album is actually in cache before making an imgur API call.
 func getImageCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
 	checkChannelsMap(data)
@@ -549,18 +390,22 @@ func getImageCommand(command Command, s *discordgo.Session, msg SentMessageData,
 		}
 		rndImg := rand.Intn(time.Now().Nanosecond()) % len(data.Images)
 		linkToImg := data.Images[rndImg].Link
-		s.ChannelMessageSend(msg.ChannelID, linkToImg)
+
+		resultEmbed := NewEmbed().SetImage(linkToImg)
+
+		_, _ = s.ChannelMessageSendEmbed(msg.ChannelID, resultEmbed.MessageEmbed)
+
 	}
 }
 
-// Retrieves the meIrlCommand of a given user.
+// Sends the me_irl command of an user or returns the default message.
 func meIrlCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
 	var result string
 
 	if res, ok := data.MeIrlData[msg.Author.ID]; ok {
 		result = res.Content
 	} else {
-		result = "I sincerely apologize, you do not seem to have a me_irl."
+		result = "You do not seem to have a me_irl."
 	}
 
 	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
@@ -580,40 +425,9 @@ func rollCommand(command Command, s *discordgo.Session, msg SentMessageData, dat
 
 	result := strconv.FormatInt(rand.Int63n(maxRoll+1), 10)
 	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-
 }
 
-// Send a private message with the basic info of the bot
-func helpCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	// Default help command
-	if len(msg.Content) == 0 {
-		commandUrl := HServer.updateServerCommands(data.ID, data)
-
-		result := fmt.Sprintf("Heya, This is GenBot written by GenDoNL. \n"+
-			"For a list of built-in commands use **%scommandlist**. \n"+
-			"For server specific commands, check out: %s \n\n" +
-			"The source code of the bot can be found here: <https://github.com/GenDoNL/GenBot>", data.Key, commandUrl)
-
-		s.ChannelMessageSend(msg.ChannelID, result)
-		return
-	}
-
-	// Help for a certain command
-	if command, ok := CmdModule.DefaultCommands[msg.Content[0]]; ok {
-		tempUsage := fmt.Sprintf(command.Usage, msg.Key)
-		result := fmt.Sprintf("***%s***\nDescription: %s\n\n%s\n", command.Name, command.Description, tempUsage)
-		s.ChannelMessageSend(msg.ChannelID, result)
-	}
-}
-
-// Get all the message
-func commandListCommands(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	result := fmt.Sprintf("This is a list of all default commands, use `%shelp <commandname>` for an in-depth description.\n\n", data.Key)
-
-	s.ChannelMessageSend(msg.ChannelID, result)
-}
-
-func customCommandListCommands(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+func customCommandListCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
 	url := HServer.updateServerCommands(data.ID, data)
 
 	result := fmt.Sprintf("The full list of commands for this server can be found here: %s", url)
@@ -628,7 +442,8 @@ func getSauceCommand(command Command, s *discordgo.Session, msg SentMessageData,
 	var url string
 
 	if len(msg.Content) == 0 {
-		res, err := findLastMessageWithAttachOrEmbed(s, msg, 5)
+		amountOfMessages := 10
+		res, err := findLastMessageWithAttachOrEmbed(s, msg, amountOfMessages)
 		if err != nil {
 			result = fmt.Sprintf("Unable to find an image to query.")
 			_, _ = s.ChannelMessageSend(msg.ChannelID, result)
@@ -645,6 +460,7 @@ func getSauceCommand(command Command, s *discordgo.Session, msg SentMessageData,
 		return
 	}
 
+	// FIXME: Use meta-data rather than url to determine whether something is an image.
 	hasExtension := false
 	for _, ext := range extensions {
 		if strings.HasSuffix(url, ext) {
@@ -672,10 +488,76 @@ func getSauceCommand(command Command, s *discordgo.Session, msg SentMessageData,
 
 	similarity, err := strconv.ParseFloat(sauceResult.Data[0].Header.Similarity, 32)
 	if err != nil || similarity < 80.0 {
-		result = fmt.Sprintf("No images found with similarity over 80.")
+		result = fmt.Sprintf("No images found with a confidence over 80.")
 	} else {
-		result = fmt.Sprintf("Source found with %s%% similarity: <%s>", sauceResult.Data[0].Header.Similarity, sauceResult.Data[0].Data.ExtUrls[0])
+		result = fmt.Sprintf("Source found with %s%% confidence: <%s>", sauceResult.Data[0].Header.Similarity, sauceResult.Data[0].Data.ExtUrls[0])
 	}
 	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+
+}
+
+// Returns the avatar of an user 
+func avatarCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+	var target *discordgo.User
+
+	if len(msg.Mentions) != 0 {
+		target = msg.Mentions[0]
+	} else {
+		target = msg.Author
+	}
+
+	resultUrl := getAvatarFromUser(target)
+	result := NewEmbed().SetAuthorFromUser(target).SetImage(resultUrl)
+
+	_, _ = s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
+}
+
+func whoIsCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+	var target *discordgo.User
+
+	if len(msg.Mentions) != 0 {
+		target = msg.Mentions[0]
+	} else {
+		target = msg.Author
+	}
+
+	memberData, err := s.GuildMember(data.ID, target.ID)
+
+	if err != nil {
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Something went wrong while retrieving member data, please try again.")
+		return
+	}
+
+
+	// Construct the base embed with user and avatar
+	result := NewEmbed().
+		SetAuthorFromUser(target).
+		SetThumbnail(getAvatarFromUser(target))
+
+	// Add nickname to message of the user has a nickname
+	if memberData.Nick != "" {
+		result.AddField("Nickname", memberData.Nick)
+	}
+
+	// Set join and registration times.
+	locale, _ := time.LoadLocation("UTC")
+	joinTime, _ := time.Parse(time.RFC3339, memberData.JoinedAt)
+	longTime := joinTime.In(locale).Format(time.RFC1123)
+
+	createTime := time.Unix(getAccountCreationDate(target), 0).In(locale).Format(time.RFC1123)
+	result.AddField("Registered", createTime).AddField("Joined", longTime)
+
+	// Add roles to the whois info
+	roles := ""
+	if len(memberData.Roles) != 0 {
+		for _, roleId := range memberData.Roles {
+			roles += "<@&" + roleId + "> "
+		}
+
+	} else {
+		roles = "None"
+	}
+	result.AddField("Roles", roles)
+	_, _ = s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 
 }

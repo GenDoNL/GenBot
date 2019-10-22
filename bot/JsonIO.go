@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-// Reads the server data from the data file.
+// Reads the config file.
 func readConfig() {
 	raw, err := ioutil.ReadFile(ConfigPath)
 	if err != nil {

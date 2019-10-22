@@ -50,11 +50,10 @@ var (
 	ConfigPath string
 	BotID      string
 	BotConfig  Config
-	HServer *HttpServer
+	HServer    *HttpServer
 
-	Servers   map[string]*ServerData
-	Modules   []Module
-	CmdModule CommandModule
+	Servers map[string]*ServerData
+	Modules map[string]Module
 
 	AlbumCache map[string]*imgur.AlbumInfo
 	imgClient  *imgur.Client
@@ -91,7 +90,9 @@ type MeIrlData struct {
 
 type Module interface {
 	setup()
-	execute(*discordgo.Session, *discordgo.MessageCreate)
+	execute(*discordgo.Session, *discordgo.MessageCreate, SentMessageData, *ServerData)
+	retrieveCommands() map[string]Command
+	retrieveHelp() string
 }
 
 func init() {
@@ -109,11 +110,12 @@ func main() {
 }
 
 func setupModules() {
-	Modules = []Module{
-		&CmdModule,
-		&ModerationModule{},
-	//	&OsuModule{}, // Temporarily disable osu module until it is configurable
-	}
+	Modules = map[string]Module{}
+
+	Modules["MetaModule"] = &MetaModule{}
+	Modules["CommandModule"] = &CommandModule{}
+	Modules["ModerationModule"] = &ModerationModule{}
+	// Modules["OsuModule"] = &OsuModule{}, // Temporarily disable osu module until it is configurable
 
 	for _, module := range Modules {
 		module.setup()
@@ -165,15 +167,18 @@ func initBot() {
 	return
 }
 
-// This function will be called (due to AddHandler above) every time a new
-// message is created on any channel that the autenticated bot has access to.
+// EventHandler for when a message is sent.
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Ignore all messages created by the bot itself
 	if m.Author.ID == BotID || len(m.Content) < 1 {
 		return
 	}
 
+	msg := parseMessage(m)
+
+	serverData := getServerData(s, m.ChannelID)
+
 	for _, module := range Modules {
-		module.execute(s, m)
+		module.execute(s, m, msg, serverData)
 	}
 }

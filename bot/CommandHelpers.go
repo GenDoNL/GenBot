@@ -5,21 +5,30 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"net/url"
 	"strings"
+	"unicode"
+	"fmt"
+	"strconv"
 )
 
 // This function parse a discord.MessageCreate into a SentMessageData struct.
 func parseMessage(m *discordgo.MessageCreate) SentMessageData {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Error("Error with: `" + m.Content + "`, I should fix this...")
-		}
-	}()
+	// Remove all white-space characters, except for new-lines.
+	f := func(c rune) bool {
+		return c != '\n' && unicode.IsSpace(c)
+	}
 
-	split := strings.Fields(m.Content)
-	Key := m.Content[:1]
-	Command := strings.ToLower(split[0][1:])
-	Content := split[1:]
-	return SentMessageData{Key, Command, Content, m.ID, m.ChannelID, m.Mentions, m.Author}
+	split := strings.FieldsFunc(m.Content, f)
+	key := m.Content[:1]
+	commandName := strings.ToLower(split[0][1:])
+	if (len(commandName) > 1) && (commandName[len(commandName)-1] == '\n') {
+		commandName = commandName[:len(commandName)-1]
+	}
+
+	content := split[1:]
+
+	log.Error(content)
+
+	return SentMessageData{key, commandName, content, m.ID, m.ChannelID, m.Mentions, m.Author}
 }
 
 // This function a string into an ID if the string is a mention.
@@ -87,7 +96,7 @@ func getRolePermissions(id string, perms []*discordgo.PermissionOverwrite) (p di
 			return
 		}
 	}
-	e = errors.New("Permissions not found in the specified role: " + id)
+	e = errors.New("permissions not found in the specified role: " + id)
 	return
 }
 
@@ -95,6 +104,17 @@ func getRolePermissionsByName(ch *discordgo.Channel, sv *discordgo.Guild, name s
 	//get role object for given name
 	role, _ := getRoleByName(name, sv.Roles)
 	return getRolePermissions(role.ID, ch.PermissionOverwrites)
+}
+
+func getRoleById(s *discordgo.Session, data *ServerData, id string) (*discordgo.Role, error) {
+	g, _ := s.Guild(data.ID)
+	for _, role := range g.Roles {
+		if role.ID == id {
+			println(role.Name)
+			return role, nil
+		}
+	}
+	return nil, errors.New("role not found in list")
 }
 
 // isValidUrl tests a string to determine if it is a url or not.
@@ -108,10 +128,15 @@ func isValidUrl(toTest string) bool {
 }
 
 // Creates a command in the given server given a name and a message.
-func createCommand(data *ServerData, commandName, message string) {
+func createCommand(data *ServerData, commandName, message string) error {
 	name := strings.ToLower(commandName)
+	if strings.Contains(name, "\n") {
+		log.Info("Trying to add command name with newline, aborted.")
+		return errors.New("trying to add command with a name that contains a new line")
+	}
 	data.CustomCommands[name] = &CommandData{name, message}
 	writeServerData()
+	return nil
 }
 
 func checkCommandsMap(data *ServerData) {
@@ -143,5 +168,21 @@ func findLastMessageWithAttachOrEmbed(s *discordgo.Session, msg SentMessageData,
 
 	result = ""
 	e = errors.New("Unable to find message with attachment or embed")
+	return
+}
+
+func getAvatarFromUser(user *discordgo.User) (resultUrl string) {
+	resultUrl = "https://cdn.discordapp.com/avatars/"
+
+	targetAvatar := user.Avatar
+	targetID := user.ID
+
+	resultUrl = fmt.Sprintf("%s%s/%s?size=256", resultUrl, targetID, targetAvatar)
+	return
+}
+
+func getAccountCreationDate(user *discordgo.User) (timestamp int64) {
+	id, _ := strconv.ParseUint(user.ID, 10, 64)
+	timestamp = int64(((id >> 22) + 1420070400000)/1000) // Divided by 1000 since we want seconds rather than ms
 	return
 }

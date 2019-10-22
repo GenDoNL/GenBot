@@ -1,15 +1,14 @@
 package main
 
 import (
-	"net/http"
-	"fmt"
-	"encoding/base64"
 	"crypto/sha1"
+	"encoding/base64"
+	"fmt"
+	"net/http"
 	"sort"
 )
 
 type HttpServer struct {
-	
 }
 
 var res map[string]string
@@ -31,13 +30,6 @@ func getUrlFromID(id string) string {
 }
 
 func (h *HttpServer) updateServerCommands(id string, data *ServerData) string {
-
-	//defer func() {
-	//	if r := recover(); r != nil {
-	//		log.Error("Error with: `" + data.ID + "`, I should fix this...")
-	//	}
-	//}()
-
 	url := getUrlFromID(id)
 
 	var keys []string
