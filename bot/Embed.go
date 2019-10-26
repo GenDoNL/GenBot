@@ -7,8 +7,8 @@ package main
 //////////////////
 
 import (
-	"github.com/bwmarrin/discordgo"
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 )
 
 type Embed struct {
