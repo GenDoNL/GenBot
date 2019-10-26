@@ -366,7 +366,7 @@ func weatherCommand(command Command, s *discordgo.Session, msg SentMessageData, 
 		return
 	}
 
-	err2 := owm.CurrentByName(msg.Content[0])
+	err2 := owm.CurrentByName(strings.Join(msg.Content, " "))
 	if err2 != nil {
 		_, _ = s.ChannelMessageSend(msg.ChannelID, "Either the OpenWeatherMap API is down or you provided an invalid location.")
 		return

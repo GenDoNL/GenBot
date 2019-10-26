@@ -206,7 +206,7 @@ func getCommandTarget(s *discordgo.Session, msg SentMessageData, data *ServerDat
 		target = msg.Mentions[0]
 	} else {
 		if len(msg.Content) > 0 {
-			trg, err := getClosestUserByName(s, data, msg.Content[0])
+			trg, err := getClosestUserByName(s, data, strings.Join(msg.Content, " "))
 			target = trg
 			if err != nil {
 				target = msg.Author // Fallback if error occurs
