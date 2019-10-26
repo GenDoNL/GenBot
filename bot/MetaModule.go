@@ -63,6 +63,24 @@ func (cmd *MetaModule) setup() {
 	cmd.MetaCommands["commands"] = commandListCommand
 	cmd.MetaCommands["cmds"] = commandListCommand
 
+	blockCommand := Command{
+		Name:        "block",
+		Description: "Blocks the given command for everyone",
+		Usage:       "Usage: `%sblock <commandname>",
+		Permission:  discordgo.PermissionManageServer,
+		Execute:     addBlockedCommand,
+	}
+	cmd.MetaCommands["block"] = blockCommand
+
+	unblockCommand := Command{
+		Name:        "unblock",
+		Description: "Unblocks the given command",
+		Usage:       "Usage: `%sunblock <commandname>",
+		Permission:  discordgo.PermissionManageServer,
+		Execute:     delBlockedCommand,
+	}
+	cmd.MetaCommands["unblock"] = unblockCommand
+
 }
 
 func (cmd *MetaModule) retrieveCommands() map[string]Command {
@@ -200,4 +218,49 @@ func delCommanderCommand(command Command, s *discordgo.Session, msg SentMessageD
 	writeServerData()
 	result = fmt.Sprintf("Removed <@%s> as commander.", userID)
 	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+}
+
+func addBlockedCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+	if len(data.BlockedCommands) == 0 {
+		data.BlockedCommands = make(map[string]bool)
+	}
+
+	var result string
+
+	if len(msg.Content) == 0 {
+		result = fmt.Sprintf(command.Usage, data.Key)
+		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		return
+	}
+
+	if msg.Content[0] == "block" || msg.Content[0] == "unblock" {
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Cannot block the block & unblock commands.")
+		return
+	}
+
+	data.BlockedCommands[msg.Content[0]] = true
+	writeServerData()
+	result = fmt.Sprintf("Blocked `%s`, use `%sunblock %s` to unblock to command.", msg.Content[0], data.Key, msg.Content[0])
+	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+
+}
+
+func delBlockedCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+	if len(data.BlockedCommands) == 0 {
+		data.BlockedCommands = make(map[string]bool)
+	}
+
+	var result string
+
+	if len(msg.Content) == 0 {
+		result = fmt.Sprintf(command.Usage, data.Key)
+		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		return
+	}
+
+	data.BlockedCommands[msg.Content[0]] = false
+	writeServerData()
+	result = fmt.Sprintf("Unblocked `%s`.", msg.Content[0])
+	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+
 }

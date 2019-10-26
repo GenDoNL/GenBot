@@ -24,6 +24,7 @@ type Config struct {
 	SauceNaoToken string `json:"saucenaotoken"`
 	DataLocation  string `json:"datalocation"`
 	WebsiteUrl    string `json:"websiteurl"`
+	OwmToken      string `json:"openweathermaptoken"`
 }
 
 // MessageData is the parsed message, allows for easier access to arguments.
@@ -61,12 +62,13 @@ var (
 
 // ServerData is the data which is saved for every server the bot is in.
 type ServerData struct {
-	ID             string                  `json:"id"`
-	Commanders     map[string]bool         `json:"commanders"`
-	Channels       map[string]*ChannelData `json:"channels"`
-	CustomCommands map[string]*CommandData `json:"commands"`
-	MeIrlData      map[string]*MeIrlData   `json:"me_irl"`
-	Key            string                  `json:"Key"`
+	ID              string                  `json:"id"`
+	Commanders      map[string]bool         `json:"commanders"`
+	Channels        map[string]*ChannelData `json:"channels"`
+	CustomCommands  map[string]*CommandData `json:"commands"`
+	BlockedCommands map[string]bool         `json:"blockedcommands"`
+	MeIrlData       map[string]*MeIrlData   `json:"me_irl"`
+	Key             string                  `json:"Key"`
 }
 
 // CommandData is the data which is saved for every command
@@ -115,6 +117,7 @@ func setupModules() {
 	Modules["MetaModule"] = &MetaModule{}
 	Modules["CommandModule"] = &CommandModule{}
 	Modules["ModerationModule"] = &ModerationModule{}
+	Modules["ImageModule"] = &ImageModule{}
 	// Modules["OsuModule"] = &OsuModule{}, // Temporarily disable osu module until it is configurable
 
 	for _, module := range Modules {
@@ -177,6 +180,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	msg := parseMessage(m)
 
 	serverData := getServerData(s, m.ChannelID)
+
+	if blocked, ok := serverData.BlockedCommands[msg.Command]; ok && blocked {
+		return
+	}
 
 	for _, module := range Modules {
 		module.execute(s, m, msg, serverData)
