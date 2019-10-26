@@ -3,10 +3,12 @@ package main
 import (
 	"errors"
 	"github.com/bwmarrin/discordgo"
+	"github.com/texttheater/golang-levenshtein/levenshtein"
+	"math"
 	"net/url"
+	"strconv"
 	"strings"
 	"unicode"
-	"strconv"
 )
 
 // This function parse a discord.MessageCreate into a SentMessageData struct.
@@ -172,6 +174,46 @@ func findLastMessageWithAttachOrEmbed(s *discordgo.Session, msg SentMessageData,
 
 func getAccountCreationDate(user *discordgo.User) (timestamp int64) {
 	id, _ := strconv.ParseUint(user.ID, 10, 64)
-	timestamp = int64(((id >> 22) + 1420070400000)/1000) // Divided by 1000 since we want seconds rather than ms
+	timestamp = int64(((id >> 22) + 1420070400000) / 1000) // Divided by 1000 since we want seconds rather than ms
+	return
+}
+
+func getClosestUserByName(s *discordgo.Session, data *ServerData, user string) (foundUser *discordgo.User, err error) {
+	currentMaxDistance := math.MaxInt64
+
+	guild, err := s.Guild(data.ID)
+
+	for _, nick := range guild.Members {
+		userName := nick.User.Username
+
+		// Prefer Server nickname over Discord username
+		if nick.Nick != "" {
+			userName = nick.Nick
+		}
+
+		levenDistance := levenshtein.DistanceForStrings([]rune(userName), []rune(user), levenshtein.DefaultOptions)
+		if levenDistance < currentMaxDistance {
+			currentMaxDistance = levenDistance
+			foundUser = nick.User
+		}
+	}
+
+	return
+}
+
+func getCommandTarget(s *discordgo.Session, msg SentMessageData, data *ServerData) (target *discordgo.User) {
+	if len(msg.Mentions) > 0 {
+		target = msg.Mentions[0]
+	} else {
+		if len(msg.Content) > 0 {
+			trg, err := getClosestUserByName(s, data, msg.Content[0])
+			target = trg
+			if err != nil {
+				target = msg.Author // Fallback if error occurs
+			}
+		} else {
+			target = msg.Author
+		}
+	}
 	return
 }

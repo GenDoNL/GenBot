@@ -167,7 +167,7 @@ func (e *Embed) SetAuthor(args ...string) *Embed {
 	return e
 }
 
-func (e *Embed) SetAuthorFromUser(author *discordgo.User) *Embed{
+func (e *Embed) SetAuthorFromUser(author *discordgo.User) *Embed {
 	var (
 		name     string
 		iconURL  string

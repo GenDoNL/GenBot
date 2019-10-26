@@ -498,13 +498,7 @@ func getSauceCommand(command Command, s *discordgo.Session, msg SentMessageData,
 
 // Returns the avatar of a user
 func avatarCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	var target *discordgo.User
-
-	if len(msg.Mentions) != 0 {
-		target = msg.Mentions[0]
-	} else {
-		target = msg.Author
-	}
+	target := getCommandTarget(s, msg, data)
 
 	resultUrl := target.AvatarURL("256")
 	result := NewEmbed().SetAuthorFromUser(target).SetImage(resultUrl)
@@ -513,13 +507,7 @@ func avatarCommand(command Command, s *discordgo.Session, msg SentMessageData, d
 }
 
 func whoIsCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	var target *discordgo.User
-
-	if len(msg.Mentions) != 0 {
-		target = msg.Mentions[0]
-	} else {
-		target = msg.Author
-	}
+	target := getCommandTarget(s, msg, data)
 
 	memberData, err := s.GuildMember(data.ID, target.ID)
 
@@ -527,7 +515,6 @@ func whoIsCommand(command Command, s *discordgo.Session, msg SentMessageData, da
 		_, _ = s.ChannelMessageSend(msg.ChannelID, "Something went wrong while retrieving member data, please try again.")
 		return
 	}
-
 
 	// Construct the base embed with user and avatar
 	result := NewEmbed().
@@ -541,7 +528,7 @@ func whoIsCommand(command Command, s *discordgo.Session, msg SentMessageData, da
 
 	// Set join and registration times.
 	locale, _ := time.LoadLocation("UTC")
-	joinTime, _ := time.Parse(time.RFC3339, memberData.JoinedAt)
+	joinTime, _ := memberData.JoinedAt.Parse()
 	longTime := joinTime.In(locale).Format(time.RFC1123)
 
 	createTime := time.Unix(getAccountCreationDate(target), 0).In(locale).Format(time.RFC1123)
