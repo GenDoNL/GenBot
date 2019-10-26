@@ -6,7 +6,10 @@ package main
 /// Credits to Necroforger (https://gist.github.com/Necroforger/8b0b70b1a69fa7828b8ad6387ebb3835)
 //////////////////
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"github.com/bwmarrin/discordgo"
+	"fmt"
+)
 
 type Embed struct {
 	*discordgo.MessageEmbed
@@ -45,6 +48,11 @@ func (e *Embed) SetDescription(description string) *Embed {
 
 //AddField [name] [value]
 func (e *Embed) AddField(name, value string) *Embed {
+	return e.AddInlineField(name, value, false)
+}
+
+//AddField [name] [value]
+func (e *Embed) AddInlineField(name, value string, inline bool) *Embed {
 	if len(value) > 1024 {
 		value = value[:1024]
 	}
@@ -54,8 +62,9 @@ func (e *Embed) AddField(name, value string) *Embed {
 	}
 
 	e.Fields = append(e.Fields, &discordgo.MessageEmbedField{
-		Name:  name,
-		Value: value,
+		Name:   name,
+		Value:  value,
+		Inline: inline,
 	})
 
 	return e
@@ -175,7 +184,7 @@ func (e *Embed) SetAuthorFromUser(author *discordgo.User) *Embed {
 		proxyURL string
 	)
 
-	name = author.Username
+	name = fmt.Sprintf("%s#%s", author.Username, author.Discriminator)
 	iconURL = author.AvatarURL("256")
 
 	e.Author = &discordgo.MessageEmbedAuthor{

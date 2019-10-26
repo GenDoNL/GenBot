@@ -1,13 +1,10 @@
 package main
 
 import (
-	"github.com/GenDoNL/saucenao-go"
-	"github.com/bwmarrin/discordgo"
-	"github.com/koffeinsource/go-imgur"
-
 	"fmt"
+	"github.com/GenDoNL/openweathermap"
+	"github.com/bwmarrin/discordgo"
 	"math/rand"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -18,12 +15,6 @@ type CommandModule struct {
 }
 
 func (cmd *CommandModule) setup() {
-	imgClient = new(imgur.Client)
-	imgClient.HTTPClient = new(http.Client)
-	imgClient.Log = log
-	imgClient.ImgurClientID = BotConfig.ImgurToken
-
-	AlbumCache = make(map[string]*imgur.AlbumInfo)
 
 	cmd.DefaultCommands = map[string]Command{}
 
@@ -65,34 +56,6 @@ func (cmd *CommandModule) setup() {
 	cmd.DefaultCommands["delmeirl"] = delMeIrlCommand
 	cmd.DefaultCommands["delme_irl"] = delMeIrlCommand
 
-	addAlbumCommand := Command{
-		Name:        "addalbum",
-		Description: "This command adds an album to this channel. Images can be retrieved at random using the `i` or `image` command.",
-		Usage:       "Usage: `%saddalbum <imgur album id>`",
-		Permission:  discordgo.PermissionManageServer,
-		Execute:     addAlbumCommand,
-	}
-	cmd.DefaultCommands["addalbum"] = addAlbumCommand
-
-	delAlbumCommand := Command{
-		Name:        "delalbum",
-		Description: "This command removes an album from this channel.",
-		Usage:       "Usage: `%sdelalbum <imgur album id>`",
-		Permission:  discordgo.PermissionManageServer,
-		Execute:     delAlbumCommand,
-	}
-	cmd.DefaultCommands["delalbum"] = delAlbumCommand
-
-	imageCommand := Command{
-		Name:        "image",
-		Description: "This command sends a random image from an album added by `addalbum`",
-		Usage:       "Usage: `%si`",
-		Permission:  discordgo.PermissionSendMessages,
-		Execute:     getImageCommand,
-	}
-	cmd.DefaultCommands["i"] = imageCommand
-	cmd.DefaultCommands["image"] = imageCommand
-
 	meirlCommand := Command{
 		Name:        "me_irl",
 		Description: "This commands sends your irl, given that you have an irl. You can add an me_irl by using `addme_irl`",
@@ -117,20 +80,10 @@ func (cmd *CommandModule) setup() {
 		Name:        "roll",
 		Description: "Rolls a random number between 0 and the upper bound provided (0 and the upper bound included). Upper bound defaults to 100.",
 		Usage:       "Usage: `%sroll <upper bound(optional)>`",
-		Permission:  discordgo.PermissionManageMessages,
+		Permission:  discordgo.PermissionSendMessages,
 		Execute:     rollCommand,
 	}
 	cmd.DefaultCommands["roll"] = rollCommand
-
-	sauceCommand := Command{
-		Name:        "sauce",
-		Description: "Provides the source of an image. A direct link to an image should be provided.",
-		Usage:       "Usage: `%ssource <URL>`",
-		Permission:  discordgo.PermissionSendMessages,
-		Execute:     getSauceCommand,
-	}
-	cmd.DefaultCommands["sauce"] = sauceCommand
-	cmd.DefaultCommands["source"] = sauceCommand
 
 	avatarCommand := Command{
 		Name:        "avatar",
@@ -153,6 +106,15 @@ func (cmd *CommandModule) setup() {
 
 	cmd.DefaultCommands["whois"] = whoIsCommand
 	cmd.DefaultCommands["who"] = whoIsCommand
+
+	weatherCommand := Command{
+		Name:        "weather",
+		Description: "Send the current weather for the given location.",
+		Usage:       "Usage: `%sweather <Location>`",
+		Permission:  discordgo.PermissionSendMessages,
+		Execute:     weatherCommand,
+	}
+	cmd.DefaultCommands["weather"] = weatherCommand
 }
 
 func (cmd *CommandModule) retrieveCommands() map[string]Command {
@@ -300,103 +262,7 @@ func delMeIrlCommand(command Command, s *discordgo.Session, msg SentMessageData,
 	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
 }
 
-// Adds an album to the list of albums.
-func addAlbumCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	checkChannelsMap(data)
-
-	var result string
-
-	if len(msg.Content) == 0 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-		return
-	}
-
-	channel, ok := data.Channels[msg.ChannelID]
-
-	if !ok {
-		data.Channels[msg.ChannelID] = &ChannelData{ID: msg.ChannelID}
-		channel = data.Channels[msg.ChannelID]
-	}
-
-	channel.Albums = append(channel.Albums, msg.Content[0])
-	writeServerData()
-	_, _ = s.ChannelMessageSend(msg.ChannelID, "Added album **"+msg.Content[0]+"** to album list.")
-}
-
-// Helper function to actually remove the albums from the list.
-func deleteAlbums(albumList []string, str string) []string {
-	list := albumList
-	for i := 0; i < len(list); i++ {
-		if list[i] == str {
-			list = append(list[:i], list[i+1:]...)
-			i--
-		}
-	}
-
-	return list
-}
-
-// Remove a specific album from the list of albums.
-func delAlbumCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	checkChannelsMap(data)
-
-	var result string
-
-	if len(msg.Content) == 0 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-		return
-	}
-
-	if channel, ok := data.Channels[msg.ChannelID]; ok && len(channel.Albums) > 0 {
-		data.Channels[msg.ChannelID].Albums = deleteAlbums(data.Channels[msg.ChannelID].Albums, msg.Content[0])
-		writeServerData()
-		result = fmt.Sprintf("Removed **%s** from the list of albums.", msg.Content[0])
-	}
-
-	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-
-}
-
 ///// Default Commands /////
-
-// Handles the image command.
-// Checks whether an album is actually in cache before making an imgur API call.
-func getImageCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	checkChannelsMap(data)
-
-	var result string
-
-	// Check there is server data for the given channel and check if there is at least 1 album.
-	if channel, ok := data.Channels[msg.ChannelID]; !ok || len(channel.Albums) <= 0 {
-		result = fmt.Sprintf("This channel does not have any albums, add an album using `%saddalbum <AlbumID> `.", data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-	} else {
-		randomImageID := rand.Intn(time.Now().Nanosecond()) % len(channel.Albums)
-		id := channel.Albums[randomImageID]
-		data, ok := AlbumCache[id]
-		if !ok {
-			var err error
-			data, _, err = imgClient.GetAlbumInfo(id)
-			if err != nil {
-				result = fmt.Sprintf("Something went wrong while trying to retrieve an image, maybe the Imgur API is down or **%s** is not an album?", id)
-				log.Error(err)
-				s.ChannelMessageSend(msg.ChannelID, result)
-				return
-			}
-			AlbumCache[id] = data
-
-		}
-		rndImg := rand.Intn(time.Now().Nanosecond()) % len(data.Images)
-		linkToImg := data.Images[rndImg].Link
-
-		resultEmbed := NewEmbed().SetImage(linkToImg)
-
-		_, _ = s.ChannelMessageSendEmbed(msg.ChannelID, resultEmbed.MessageEmbed)
-
-	}
-}
 
 // Sends the me_irl command of an user or returns the default message.
 func meIrlCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
@@ -433,67 +299,6 @@ func customCommandListCommand(command Command, s *discordgo.Session, msg SentMes
 	result := fmt.Sprintf("The full list of commands for this server can be found here: %s", url)
 
 	s.ChannelMessageSend(msg.ChannelID, result)
-}
-
-func getSauceCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	var result string
-	extensions := []string{".jpg", ".jpeg", ".png", ".gif", ".bmp"}
-
-	var url string
-
-	if len(msg.Content) == 0 {
-		amountOfMessages := 10
-		res, err := findLastMessageWithAttachOrEmbed(s, msg, amountOfMessages)
-		if err != nil {
-			result = fmt.Sprintf("Unable to find an image to query.")
-			_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-			return
-		}
-		url = res
-	} else {
-		url = msg.Content[0]
-	}
-
-	if !isValidUrl(url) {
-		result = fmt.Sprintf("Could not parse command arguments to a URL")
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-		return
-	}
-
-	// FIXME: Use meta-data rather than url to determine whether something is an image.
-	hasExtension := false
-	for _, ext := range extensions {
-		if strings.HasSuffix(url, ext) {
-			hasExtension = true
-		}
-	}
-
-	if !hasExtension {
-		result = "URL has a non-supported file extension."
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-		return
-	}
-
-	sauceClient := saucenao.New(BotConfig.SauceNaoToken)
-
-	sauceResult, err := sauceClient.FromURL(url)
-
-	if err != nil || len(sauceResult.Data) == 0 {
-		result = fmt.Sprintf("Something went wrong while contacting the Saucenao API." +
-			"You could try sourcing your images manually at https://saucenao.com/")
-		log.Errorf("%s \n %s", err, sauceResult)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-		return
-	}
-
-	similarity, err := strconv.ParseFloat(sauceResult.Data[0].Header.Similarity, 32)
-	if err != nil || similarity < 80.0 {
-		result = fmt.Sprintf("No images found with a confidence over 80.")
-	} else {
-		result = fmt.Sprintf("Source found with %s%% confidence: <%s>", sauceResult.Data[0].Header.Similarity, sauceResult.Data[0].Data.ExtUrls[0])
-	}
-	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
-
 }
 
 // Returns the avatar of a user
@@ -545,6 +350,49 @@ func whoIsCommand(command Command, s *discordgo.Session, msg SentMessageData, da
 		roles = "None"
 	}
 	result.AddField("Roles", roles)
+	_, _ = s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
+}
+
+func weatherCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+	owm, err := openweathermap.NewCurrent("C", "EN", BotConfig.OwmToken)
+
+	if err != nil {
+		log.Error(err)
+		return
+	}
+
+	if len(msg.Content) == 0 {
+		_, _ = s.ChannelMessageSend(msg.ChannelID, fmt.Sprintf(command.Usage, data.Key))
+		return
+	}
+
+	err2 := owm.CurrentByName(msg.Content[0])
+	if err2 != nil {
+		_, _ = s.ChannelMessageSend(msg.ChannelID, "Either the OpenWeatherMap API is down or you provided an invalid location.")
+		return
+	}
+
+	fahr := owm.Main.Temp*9/5 + 32
+
+	// Convert timezone data from Seconds to hours
+	GmtPlus := owm.Timezone / 60 / 60
+	localTime := time.Now().UTC().Add(time.Duration(GmtPlus) * time.Hour).Format("3:04PM, Monday") // Local time
+	iconurl := "http://openweathermap.org/img/wn/" + owm.Weather[0].Icon + "@2x.png"
+
+	directionVal := int((owm.Wind.Deg / 22.5) + .5)
+	directions := []string{"north", "north-northeast", "northeast", "east-northeast", "east", "east-southeast",
+		"southeast", "south-southeast", "south", "south-southwest", "southwest", "west-southwest", "west", "west-northwest", "northwest", "north-northwest"}
+	windDirection := directions[(directionVal % 16)]
+
+	result := NewEmbed().
+		SetAuthorFromUser(msg.Author).SetTitle(fmt.Sprintf("Current weather in **%s** at **%s**", owm.Name, localTime)).
+		SetThumbnail(iconurl).
+		AddField("Current Conditions:", fmt.Sprintf("**%s** at **%.1f°C** / **%.1f°F**",
+			owm.Weather[0].Description, owm.Main.Temp, fahr)).
+		AddInlineField("Humidity", fmt.Sprintf("%d%%", owm.Main.Humidity), true).
+		AddInlineField("Wind", fmt.Sprintf("%.1f m/s from the %s ", owm.Wind.Speed, windDirection), true).
+		SetFooter("Data provided by OpenWeatherMap", "http://f.gendo.moe/KlhvQJoD.png")
+
 	_, _ = s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 
 }
