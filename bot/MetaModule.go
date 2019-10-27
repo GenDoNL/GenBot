@@ -66,7 +66,7 @@ func (cmd *MetaModule) setup() {
 	blockCommand := Command{
 		Name:        "block",
 		Description: "Blocks the given command for everyone",
-		Usage:       "Usage: `%sblock <commandname>",
+		Usage:       "Usage: `%sblock <commandname>`",
 		Permission:  discordgo.PermissionManageServer,
 		Execute:     addBlockedCommand,
 	}
@@ -75,7 +75,7 @@ func (cmd *MetaModule) setup() {
 	unblockCommand := Command{
 		Name:        "unblock",
 		Description: "Unblocks the given command",
-		Usage:       "Usage: `%sunblock <commandname>",
+		Usage:       "Usage: `%sunblock <commandname>`",
 		Permission:  discordgo.PermissionManageServer,
 		Execute:     delBlockedCommand,
 	}
