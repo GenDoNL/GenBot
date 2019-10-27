@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/GenDoNL/openweathermap"
+	"github.com/briandowns/openweathermap"
 	"github.com/bwmarrin/discordgo"
 	"math/rand"
 	"strconv"
