@@ -180,6 +180,7 @@ func getAccountCreationDate(user *discordgo.User) (timestamp int64) {
 
 func getClosestUserByName(s *discordgo.Session, data *ServerData, user string) (foundUser *discordgo.User, err error) {
 	currentMaxDistance := math.MaxInt64
+	target := strings.ToLower(user)
 
 	guild, err := s.Guild(data.ID)
 
@@ -191,14 +192,14 @@ func getClosestUserByName(s *discordgo.Session, data *ServerData, user string) (
 	}
 
 	for _, nick := range guild.Members {
-		userName := nick.User.Username
+		userName := strings.ToLower(nick.User.Username)
 
-		levenDistance := levenshtein.DistanceForStrings([]rune(userName), []rune(user), expensiveSubtitution)
+		levenDistance := levenshtein.DistanceForStrings([]rune(userName), []rune(target), expensiveSubtitution)
 
 		nickDistance := math.MaxInt64
 		// Prefer Server nickname over Discord username
 		if nick.Nick != "" {
-			nickDistance = levenshtein.DistanceForStrings([]rune(nick.Nick), []rune(user), expensiveSubtitution)
+			nickDistance = levenshtein.DistanceForStrings([]rune(strings.ToLower(nick.Nick)), []rune(target), expensiveSubtitution)
 		}
 
 		if levenDistance > nickDistance {
