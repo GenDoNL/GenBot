@@ -3,12 +3,12 @@ package main
 import (
 	"errors"
 	"github.com/bwmarrin/discordgo"
-	"github.com/texttheater/golang-levenshtein/levenshtein"
 	"math"
 	"net/url"
 	"strconv"
 	"strings"
 	"unicode"
+	"github.com/texttheater/golang-levenshtein/levenshtein"
 )
 
 // This function parse a discord.MessageCreate into a SentMessageData struct.
@@ -183,15 +183,28 @@ func getClosestUserByName(s *discordgo.Session, data *ServerData, user string) (
 
 	guild, err := s.Guild(data.ID)
 
+	expensiveSubtitution := levenshtein.Options{
+		InsCost: 1,
+		DelCost: 1,
+		SubCost: 3,
+		Matches: levenshtein.IdenticalRunes,
+	}
+
 	for _, nick := range guild.Members {
 		userName := nick.User.Username
 
+		levenDistance := levenshtein.DistanceForStrings([]rune(userName), []rune(user), expensiveSubtitution)
+
+		nickDistance := math.MaxInt64
 		// Prefer Server nickname over Discord username
 		if nick.Nick != "" {
-			userName = nick.Nick
+			nickDistance = levenshtein.DistanceForStrings([]rune(nick.Nick), []rune(user), expensiveSubtitution)
 		}
 
-		levenDistance := levenshtein.DistanceForStrings([]rune(userName), []rune(user), levenshtein.DefaultOptions)
+		if levenDistance > nickDistance {
+			levenDistance = nickDistance
+		}
+
 		if levenDistance < currentMaxDistance {
 			currentMaxDistance = levenDistance
 			foundUser = nick.User
