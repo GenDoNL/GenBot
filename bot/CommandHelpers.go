@@ -196,10 +196,19 @@ func getClosestUserByName(s *discordgo.Session, data *ServerData, user string) (
 
 		levenDistance := levenshtein.DistanceForStrings([]rune(userName), []rune(target), expensiveSubtitution)
 
+		if strings.HasPrefix(userName, target) {
+			levenDistance -= 10 // Bonus for starting with the correct name
+		}
+
 		nickDistance := math.MaxInt64
 		// Prefer Server nickname over Discord username
 		if nick.Nick != "" {
-			nickDistance = levenshtein.DistanceForStrings([]rune(strings.ToLower(nick.Nick)), []rune(target), expensiveSubtitution)
+			userName = strings.ToLower(nick.Nick)
+			nickDistance = levenshtein.DistanceForStrings([]rune(userName), []rune(target), expensiveSubtitution)
+
+			if strings.HasPrefix(userName, target) {
+				nickDistance -= 10 // Bonus for starting with the correct name
+			}
 		}
 
 		if levenDistance > nickDistance {
