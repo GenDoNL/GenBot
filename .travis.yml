@@ -2,7 +2,7 @@ language: go
 
 matrix:
   include:
-    - go: "1.10"
+    - go: "1.13"
     
 # Install all external dependencies, ensuring they are updated.
 install:
@@ -12,7 +12,9 @@ install:
 - go get github.com/thehowl/go-osuapi
 - go get github.com/lib/pq
 - go get github.com/op/go-logging
-- go get github.com/GenDoNL/saucenao-go
+- go get github.com/gendonl/saucenao-go
+- go get github.com/briandowns/openweathermap
+- go get github.com/texttheater/golang-levenshtein/levenshtein
 
 script:
 - go test -v ./...
