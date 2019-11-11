@@ -115,6 +115,18 @@ func (cmd *CommandModule) setup() {
 		Execute:     weatherCommand,
 	}
 	cmd.DefaultCommands["weather"] = weatherCommand
+
+	colorCommand := Command{
+		Name:        "Color",
+		Description: "Send the hex of the mentioned user, or the message author if no-one is mentioned.",
+		Usage:       "Usage: `%scolor <@User(Optional)>`",
+		Permission:  discordgo.PermissionSendMessages,
+		Execute:     colorCommand,
+	}
+	cmd.DefaultCommands["color"] = colorCommand
+	cmd.DefaultCommands["colour"] = colorCommand
+	cmd.DefaultCommands["clr"] = colorCommand
+
 }
 
 func (cmd *CommandModule) retrieveCommands() map[string]Command {
@@ -306,7 +318,10 @@ func avatarCommand(command Command, s *discordgo.Session, msg SentMessageData, d
 	target := getCommandTarget(s, msg, data)
 
 	resultUrl := target.AvatarURL("256")
-	result := NewEmbed().SetAuthorFromUser(target).SetImage(resultUrl)
+	result := NewEmbed().
+		SetAuthorFromUser(target).
+		SetColorFromUser(s, msg.ChannelID, target).
+		SetImage(resultUrl)
 
 	_, _ = s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 }
@@ -324,11 +339,12 @@ func whoIsCommand(command Command, s *discordgo.Session, msg SentMessageData, da
 	// Construct the base embed with user and avatar
 	result := NewEmbed().
 		SetAuthorFromUser(target).
+		SetColorFromUser(s, msg.ChannelID, target).
 		SetThumbnail(target.AvatarURL("256"))
 
 	// Add nickname to message of the user has a nickname
 	if memberData.Nick != "" {
-		result.AddField("Nickname", memberData.Nick)
+		result.AddInlineField("Nickname", memberData.Nick, true)
 	}
 
 	// Set join and registration times.
@@ -366,8 +382,8 @@ func weatherCommand(command Command, s *discordgo.Session, msg SentMessageData, 
 		return
 	}
 
-	err2 := owm.CurrentByName(strings.Join(msg.Content, " "))
-	if err2 != nil {
+	err = owm.CurrentByName(strings.Join(msg.Content, " "))
+	if err != nil {
 		_, _ = s.ChannelMessageSend(msg.ChannelID, "Either the OpenWeatherMap API is down or you provided an invalid location.")
 		return
 	}
@@ -375,9 +391,9 @@ func weatherCommand(command Command, s *discordgo.Session, msg SentMessageData, 
 	fahr := owm.Main.Temp*9/5 + 32
 
 	// Convert timezone data from Seconds to hours
-	GmtPlus := owm.Timezone / 60 / 60
-	localTime := time.Now().UTC().Add(time.Duration(GmtPlus) * time.Hour).Format("3:04PM, Monday") // Local time
-	iconurl := "http://openweathermap.org/img/wn/" + owm.Weather[0].Icon + "@2x.png"
+	GmtOffset := owm.Timezone / 60 / 60
+	localTime := time.Now().UTC().Add(time.Duration(GmtOffset) * time.Hour).Format("3:04PM, Monday") // Local time
+	iconUrl := "http://openweathermap.org/img/wn/" + owm.Weather[0].Icon + "@2x.png"
 
 	directionVal := int((owm.Wind.Deg / 22.5) + .5)
 	directions := []string{"north", "north-northeast", "northeast", "east-northeast", "east", "east-southeast",
@@ -385,14 +401,29 @@ func weatherCommand(command Command, s *discordgo.Session, msg SentMessageData, 
 	windDirection := directions[(directionVal % 16)]
 
 	result := NewEmbed().
-		SetAuthorFromUser(msg.Author).SetTitle(fmt.Sprintf("Current weather in **%s (%s)** at **%s**", owm.Name, owm.Sys.Country, localTime)).
-		SetThumbnail(iconurl).
+		SetAuthorFromUser(msg.Author).
+		SetColorFromUser(s, msg.ChannelID, msg.Author).
+		SetThumbnail(iconUrl).
+		SetTitle(fmt.Sprintf("Current weather in **%s (%s)** at **%s**", owm.Name, owm.Sys.Country, localTime)).
 		AddField("Current Conditions:", fmt.Sprintf("**%s** at **%.1f°C** / **%.1f°F**",
 			owm.Weather[0].Description, owm.Main.Temp, fahr)).
 		AddInlineField("Humidity", fmt.Sprintf("%d%%", owm.Main.Humidity), true).
-		AddInlineField("Wind", fmt.Sprintf("%.1f m/s from the %s ", owm.Wind.Speed, windDirection), true).
+		AddInlineField("Wind", fmt.Sprintf("%.1f km/h from the %s ", owm.Wind.Speed*3.6, windDirection), true).
 		SetFooter("Data provided by OpenWeatherMap", "http://f.gendo.moe/KlhvQJoD.png")
 
 	_, _ = s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 
+}
+
+func colorCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+	target := getCommandTarget(s, msg, data)
+
+	color := s.State.UserColor(target.ID, msg.ChannelID)
+
+	result := NewEmbed().
+		SetAuthorFromUser(msg.Author).
+		SetColor(color).
+		SetDescription(fmt.Sprintf("\n#%x\n", color))
+
+	_, _ = s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 }

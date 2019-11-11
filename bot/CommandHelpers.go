@@ -3,12 +3,12 @@ package main
 import (
 	"errors"
 	"github.com/bwmarrin/discordgo"
+	"github.com/texttheater/golang-levenshtein/levenshtein"
 	"math"
 	"net/url"
 	"strconv"
 	"strings"
 	"unicode"
-	"github.com/texttheater/golang-levenshtein/levenshtein"
 )
 
 // This function parse a discord.MessageCreate into a SentMessageData struct.

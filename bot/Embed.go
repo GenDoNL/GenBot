@@ -204,6 +204,11 @@ func (e *Embed) SetURL(URL string) *Embed {
 }
 
 //SetColor ...
+func (e *Embed) SetColorFromUser(s *discordgo.Session, channelID string, author *discordgo.User) *Embed {
+	e.Color = s.State.UserColor(author.ID, channelID)
+	return e
+}
+
 func (e *Embed) SetColor(clr int) *Embed {
 	e.Color = clr
 	return e
