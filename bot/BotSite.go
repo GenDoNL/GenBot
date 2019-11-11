@@ -1,15 +1,15 @@
 package main
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"sort"
 	"time"
-	"context"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type HttpServer struct {

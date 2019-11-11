@@ -1,17 +1,17 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"github.com/bwmarrin/discordgo"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
+	"go.mongodb.org/mongo-driver/bson"
 	"math"
 	"net/url"
 	"strconv"
 	"strings"
-	"unicode"
-	"context"
 	"time"
-	"go.mongodb.org/mongo-driver/bson"
+	"unicode"
 )
 
 // This function parse a discord.MessageCreate into a SentMessageData struct.
@@ -61,7 +61,6 @@ func getServerDataDB(s *discordgo.Session, channelID string) *ServerData {
 	var data ServerData
 	err := serverCollection.FindOne(ctx, filter).Decode(&data)
 
-
 	if err != nil {
 		log.Error(err.Error())
 		data = ServerData{ID: servID, Key: "!"}
@@ -73,18 +72,6 @@ func getServerDataDB(s *discordgo.Session, channelID string) *ServerData {
 	}
 
 	return &data
-
-	//if len(Servers) == 0 {
-	//	Servers = make(map[string]*ServerData)
-	//}
-	//
-	//if serv, ok := Servers[servID]; ok {
-	//	return serv
-	//}
-
-	//Servers[servID] = &ServerData{ID: servID, Key: "!"}
-	//return Servers[servID]
-
 }
 
 func writeServerDataDB(data *ServerData) error {
@@ -92,7 +79,7 @@ func writeServerDataDB(data *ServerData) error {
 
 	if err != nil {
 		log.Error(err)
-		return  err
+		return err
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
@@ -107,7 +94,7 @@ func writeServerDataDB(data *ServerData) error {
 
 	if err2 != nil {
 		log.Error(err)
-		return  err
+		return err
 	}
 
 	return nil

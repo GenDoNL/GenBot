@@ -4,14 +4,16 @@ import (
 	"flag"
 	_ "github.com/lib/pq"
 
+	"context"
 	"github.com/bwmarrin/discordgo"
 	"github.com/koffeinsource/go-imgur"
 	"github.com/op/go-logging"
-	"os"
 	"go.mongodb.org/mongo-driver/mongo"
-	"time"
-	"context"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"os"
+	"time"
+	"io/ioutil"
+	"encoding/json"
 )
 
 // Set up Logger
@@ -30,7 +32,7 @@ type Config struct {
 	WebsiteUrl    string `json:"websiteurl"`
 	OwmToken      string `json:"openweathermaptoken"`
 	Mongo         string `json:"mongo"`
-	Database	  string `json:"database"`
+	Database      string `json:"database"`
 }
 
 // MessageData is the parsed message, allows for easier access to arguments.
@@ -64,8 +66,7 @@ var (
 	AlbumCache map[string]*imgur.AlbumInfo
 	imgClient  *imgur.Client
 
-
-	mongoDB *mongo.Client
+	mongoDB          *mongo.Client
 	serverCollection *mongo.Collection
 )
 
@@ -134,6 +135,17 @@ func setupModules() {
 	}
 }
 
+// Reads the config file.
+func readConfig() {
+	raw, err := ioutil.ReadFile(ConfigPath)
+	if err != nil {
+		log.Fatal(err.Error())
+	} else {
+		json.Unmarshal(raw, &BotConfig)
+		log.Info("Config file loaded.")
+	}
+}
+
 func startLogger() {
 	backEnd := logging.NewLogBackend(os.Stderr, "", 0)
 	backEndFormatter := logging.NewBackendFormatter(backEnd, format)
@@ -154,7 +166,6 @@ func startDataBase() {
 	}
 
 	serverCollection = mongoDB.Database(BotConfig.Database).Collection("servers")
-
 }
 
 func initBot() {
@@ -201,7 +212,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	msg := parseMessage(m)
-	
+
 	serverData := getServerDataDB(s, m.ChannelID)
 
 	if blocked, ok := serverData.BlockedCommands[msg.Command]; ok && blocked {
