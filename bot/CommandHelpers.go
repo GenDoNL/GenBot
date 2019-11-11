@@ -9,6 +9,9 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	"context"
+	"time"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // This function parse a discord.MessageCreate into a SentMessageData struct.
@@ -26,8 +29,6 @@ func parseMessage(m *discordgo.MessageCreate) SentMessageData {
 	}
 
 	content := split[1:]
-
-	log.Error(content)
 
 	return SentMessageData{key, commandName, content, m.ID, m.ChannelID, m.Mentions, m.Author}
 }
@@ -49,22 +50,67 @@ func parseMention(str string) (string, error) {
 }
 
 // Returns the ServerData of a server, given a message object.
-func getServerData(s *discordgo.Session, channelID string) *ServerData {
+func getServerDataDB(s *discordgo.Session, channelID string) *ServerData {
 	channel, _ := s.Channel(channelID)
 
 	servID := channel.GuildID
 
-	if len(Servers) == 0 {
-		Servers = make(map[string]*ServerData)
+	//var err error
+	filter := bson.M{"id": servID}
+	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	var data ServerData
+	err := serverCollection.FindOne(ctx, filter).Decode(&data)
+
+
+	if err != nil {
+		log.Error(err.Error())
+		data = ServerData{ID: servID, Key: "!"}
+
+		err2 := writeServerDataDB(&data)
+		if err2 != nil {
+			log.Fatal(err2)
+		}
 	}
 
-	if serv, ok := Servers[servID]; ok {
-		return serv
+	return &data
+
+	//if len(Servers) == 0 {
+	//	Servers = make(map[string]*ServerData)
+	//}
+	//
+	//if serv, ok := Servers[servID]; ok {
+	//	return serv
+	//}
+
+	//Servers[servID] = &ServerData{ID: servID, Key: "!"}
+	//return Servers[servID]
+
+}
+
+func writeServerDataDB(data *ServerData) error {
+	dataB, err := bson.Marshal(data)
+
+	if err != nil {
+		log.Error(err)
+		return  err
 	}
 
-	Servers[servID] = &ServerData{ID: servID, Key: "!"}
-	return Servers[servID]
+	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	res, err2 := serverCollection.ReplaceOne(ctx, bson.M{"id": data.ID}, dataB)
 
+	log.Infof("Updated %d entries in database.", res)
+
+	if res.MatchedCount == 0 {
+		serverCollection.InsertOne(ctx, dataB)
+		log.Infof("Inserted new server %s into database.", data.ID)
+	}
+
+	if err2 != nil {
+		log.Error(err)
+		return  err
+	}
+
+	return nil
 }
 
 // Checks whether a user id (String) is in a slice of users.
@@ -136,7 +182,7 @@ func createCommand(data *ServerData, commandName, message string) error {
 		return errors.New("trying to add command with a name that contains a new line")
 	}
 	data.CustomCommands[name] = &CommandData{name, message}
-	writeServerData()
+	writeServerDataDB(data)
 	return nil
 }
 

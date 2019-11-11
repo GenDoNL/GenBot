@@ -146,7 +146,7 @@ func setKeyCommand(command Command, s *discordgo.Session, msg SentMessageData, d
 		result = fmt.Sprintf(command.Usage, data.Key)
 	} else if len(msg.Content[0]) == 1 {
 		data.Key = msg.Content[0]
-		writeServerData()
+		writeServerDataDB(data)
 		result = fmt.Sprintf("Changed bot key to **%s**.", msg.Content[0])
 	} else {
 		result = fmt.Sprintf("Key should have a length of **1**")
@@ -185,7 +185,7 @@ func addCommanderCommand(command Command, s *discordgo.Session, msg SentMessageD
 	}
 
 	data.Commanders[userID] = true
-	writeServerData()
+	writeServerDataDB(data)
 	result = fmt.Sprintf("Added <@%s> as commander.", userID)
 	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
 
@@ -215,7 +215,7 @@ func delCommanderCommand(command Command, s *discordgo.Session, msg SentMessageD
 	}
 
 	data.Commanders[userID] = false
-	writeServerData()
+	writeServerDataDB(data)
 	result = fmt.Sprintf("Removed <@%s> as commander.", userID)
 	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
 }
@@ -239,7 +239,7 @@ func addBlockedCommand(command Command, s *discordgo.Session, msg SentMessageDat
 	}
 
 	data.BlockedCommands[msg.Content[0]] = true
-	writeServerData()
+	writeServerDataDB(data)
 	result = fmt.Sprintf("Blocked `%s`, use `%sunblock %s` to unblock to command.", msg.Content[0], data.Key, msg.Content[0])
 	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
 
@@ -259,7 +259,7 @@ func delBlockedCommand(command Command, s *discordgo.Session, msg SentMessageDat
 	}
 
 	data.BlockedCommands[msg.Content[0]] = false
-	writeServerData()
+	writeServerDataDB(data)
 	result = fmt.Sprintf("Unblocked `%s`.", msg.Content[0])
 	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
 

@@ -8,6 +8,10 @@ import (
 	"github.com/koffeinsource/go-imgur"
 	"github.com/op/go-logging"
 	"os"
+	"go.mongodb.org/mongo-driver/mongo"
+	"time"
+	"context"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // Set up Logger
@@ -25,6 +29,8 @@ type Config struct {
 	DataLocation  string `json:"datalocation"`
 	WebsiteUrl    string `json:"websiteurl"`
 	OwmToken      string `json:"openweathermaptoken"`
+	Mongo         string `json:"mongo"`
+	Database	  string `json:"database"`
 }
 
 // MessageData is the parsed message, allows for easier access to arguments.
@@ -53,41 +59,44 @@ var (
 	BotConfig  Config
 	HServer    *HttpServer
 
-	Servers map[string]*ServerData
 	Modules map[string]Module
 
 	AlbumCache map[string]*imgur.AlbumInfo
 	imgClient  *imgur.Client
+
+
+	mongoDB *mongo.Client
+	serverCollection *mongo.Collection
 )
 
 // ServerData is the data which is saved for every server the bot is in.
 type ServerData struct {
-	ID              string                  `json:"id"`
-	Commanders      map[string]bool         `json:"commanders"`
-	Channels        map[string]*ChannelData `json:"channels"`
-	CustomCommands  map[string]*CommandData `json:"commands"`
-	BlockedCommands map[string]bool         `json:"blockedcommands"`
-	MeIrlData       map[string]*MeIrlData   `json:"me_irl"`
-	Key             string                  `json:"Key"`
+	ID              string                  `json:"id" bson:"id"`
+	Commanders      map[string]bool         `json:"commanders" bson:"commanders"`
+	Channels        map[string]*ChannelData `json:"channels" bson:"channels"`
+	CustomCommands  map[string]*CommandData `json:"commands" bson:"commands"`
+	BlockedCommands map[string]bool         `json:"blockedcommands" bson:"blockedcommands"`
+	MeIrlData       map[string]*MeIrlData   `json:"me_irl" bson:"me_irl"`
+	Key             string                  `json:"Key" bson:"Key"`
 }
 
 // CommandData is the data which is saved for every command
 type CommandData struct {
-	Name    string `json:"name"`
-	Content string `json:"content"`
+	Name    string `json:"name" bson:"name"`
+	Content string `json:"content" bson:"content"`
 }
 
 // ChannelData is the data which is saved for every channel
 type ChannelData struct {
-	ID     string   `json:"id"`
-	Albums []string `json:"albums"`
+	ID     string   `json:"id" bson:"id"`
+	Albums []string `json:"albums" bson:"albums"`
 }
 
 // MeIrlData is the data which is saved for every meIrlCommand
 type MeIrlData struct {
-	UserID   string `json:"id"`
-	Nickname string `json:"nickname"`
-	Content  string `json:"content"`
+	UserID   string `json:"id" bson:"id"`
+	Nickname string `json:"nickname" bson:"nickname"`
+	Content  string `json:"content" bson:"content"`
 }
 
 type Module interface {
@@ -105,8 +114,8 @@ func init() {
 func main() {
 	readConfig()
 	startLogger()
-	readServerData()
 	setupModules()
+	startDataBase()
 	initBot()
 	return
 }
@@ -132,6 +141,20 @@ func startLogger() {
 	logging.SetBackend(backEndFormatter)
 
 	log.Info("Logger Initialized")
+}
+
+func startDataBase() {
+	var err error
+
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	mongoDB, err = mongo.Connect(ctx, options.Client().ApplyURI(BotConfig.Mongo))
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	serverCollection = mongoDB.Database(BotConfig.Database).Collection("servers")
+
 }
 
 func initBot() {
@@ -178,8 +201,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	msg := parseMessage(m)
-
-	serverData := getServerData(s, m.ChannelID)
+	
+	serverData := getServerDataDB(s, m.ChannelID)
 
 	if blocked, ok := serverData.BlockedCommands[msg.Command]; ok && blocked {
 		return

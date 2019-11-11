@@ -113,7 +113,7 @@ func addAlbumCommand(command Command, s *discordgo.Session, msg SentMessageData,
 	}
 
 	channel.Albums = append(channel.Albums, msg.Content[0])
-	writeServerData()
+	writeServerDataDB(data)
 	_, _ = s.ChannelMessageSend(msg.ChannelID, "Added album **"+msg.Content[0]+"** to album list.")
 }
 
@@ -144,7 +144,7 @@ func delAlbumCommand(command Command, s *discordgo.Session, msg SentMessageData,
 
 	if channel, ok := data.Channels[msg.ChannelID]; ok && len(channel.Albums) > 0 {
 		data.Channels[msg.ChannelID].Albums = deleteAlbums(data.Channels[msg.ChannelID].Albums, msg.Content[0])
-		writeServerData()
+		writeServerDataDB(data)
 		result = fmt.Sprintf("Removed **%s** from the list of albums.", msg.Content[0])
 	}
 
