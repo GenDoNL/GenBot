@@ -406,7 +406,7 @@ func weatherCommand(command Command, s *discordgo.Session, msg SentMessageData, 
 		SetAuthorFromUser(msg.Author).
 		SetColorFromUser(s, msg.ChannelID, msg.Author).
 		SetThumbnail(iconUrl).
-		SetTitle(fmt.Sprintf("%s Weather in **%s** at **%s**", flag, owm.Name, localTime)).
+		SetTitle(fmt.Sprintf("Weather in **%s** %s at **%s**", owm.Name, flag, localTime)).
 		AddField("Current Conditions:", fmt.Sprintf("**%s** at **%.1f°C** / **%.1f°F**",
 			owm.Weather[0].Description, owm.Main.Temp, fahr)).
 		AddInlineField("Humidity", fmt.Sprintf("%d%%", owm.Main.Humidity), true).
