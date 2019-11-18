@@ -8,6 +8,7 @@ import (
 
 type ModerationModule struct {
 	ModerationCommands map[string]Command
+	HelpString			string
 }
 
 func (cmd *ModerationModule) setup() {
@@ -47,8 +48,10 @@ func (cmd *ModerationModule) retrieveCommands() map[string]Command {
 	return cmd.ModerationCommands
 }
 
-func (cmd *ModerationModule) retrieveHelp() string {
-	return ""
+func (cmd *ModerationModule) retrieveHelp() (moduleName string, info string) {
+	moduleName = "Moderation Module"
+	info = commandsToHelp(&cmd.HelpString, cmd.ModerationCommands)
+	return
 }
 
 func (cmd *ModerationModule) execute(s *discordgo.Session, m *discordgo.MessageCreate, msg SentMessageData, serverData *ServerData) {

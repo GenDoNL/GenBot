@@ -12,6 +12,7 @@ import (
 
 type CommandModule struct {
 	DefaultCommands map[string]Command
+	HelpString		string
 }
 
 func (cmd *CommandModule) setup() {
@@ -109,15 +110,15 @@ func (cmd *CommandModule) setup() {
 
 	weatherCommand := Command{
 		Name:        "weather",
-		Description: "Send the current weather for the given location.",
-		Usage:       "Usage: `%sweather <Location>`",
+		Description: "Send the current weather for the given city.",
+		Usage:       "Usage: `%sweather <City>`",
 		Permission:  discordgo.PermissionSendMessages,
 		Execute:     weatherCommand,
 	}
 	cmd.DefaultCommands["weather"] = weatherCommand
 
 	colorCommand := Command{
-		Name:        "Color",
+		Name:        "color",
 		Description: "Send the hex of the mentioned user, or the message author if no-one is mentioned.",
 		Usage:       "Usage: `%scolor <@User(Optional)>`",
 		Permission:  discordgo.PermissionSendMessages,
@@ -133,8 +134,10 @@ func (cmd *CommandModule) retrieveCommands() map[string]Command {
 	return cmd.DefaultCommands
 }
 
-func (cmd *CommandModule) retrieveHelp() string {
-	return ""
+func (cmd *CommandModule) retrieveHelp() (moduleName string, info string) {
+	moduleName = "Default Commands"
+	info = commandsToHelp(&cmd.HelpString, cmd.DefaultCommands)
+	return
 }
 
 func (cmd *CommandModule) execute(s *discordgo.Session, m *discordgo.MessageCreate, msg SentMessageData, serverData *ServerData) {
@@ -393,20 +396,24 @@ func weatherCommand(command Command, s *discordgo.Session, msg SentMessageData, 
 	// Convert timezone data from Seconds to hours
 	GmtOffset := owm.Timezone / 60 / 60
 	localTime := time.Now().UTC().Add(time.Duration(GmtOffset) * time.Hour).Format("3:04PM, Monday") // Local time
+
+	// Generate the url of the weather icon
 	iconUrl := "http://openweathermap.org/img/wn/" + owm.Weather[0].Icon + "@2x.png"
 
+	// Convert degrees to wind direction.
 	directionVal := int((owm.Wind.Deg / 22.5) + .5)
 	directions := []string{"north", "north-northeast", "northeast", "east-northeast", "east", "east-southeast",
 		"southeast", "south-southeast", "south", "south-southwest", "southwest", "west-southwest", "west", "west-northwest", "northwest", "north-northwest"}
 	windDirection := directions[(directionVal % 16)]
 
+	// Generate teh flag emoji
 	flag := fmt.Sprintf(":flag_%s:", strings.ToLower(owm.Sys.Country))
 
 	result := NewEmbed().
 		SetAuthorFromUser(msg.Author).
 		SetColorFromUser(s, msg.ChannelID, msg.Author).
 		SetThumbnail(iconUrl).
-		SetTitle(fmt.Sprintf("Weather in **%s** %s at **%s**", owm.Name, flag, localTime)).
+		SetTitle(fmt.Sprintf("Weather in **%s** at **%s** %s", owm.Name, localTime, flag)).
 		AddField("Current Conditions:", fmt.Sprintf("**%s** at **%.1f°C** / **%.1f°F**",
 			owm.Weather[0].Description, owm.Main.Temp, fahr)).
 		AddInlineField("Humidity", fmt.Sprintf("%d%%", owm.Main.Humidity), true).

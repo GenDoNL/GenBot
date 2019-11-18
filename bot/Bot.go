@@ -104,7 +104,7 @@ type Module interface {
 	setup()
 	execute(*discordgo.Session, *discordgo.MessageCreate, SentMessageData, *ServerData)
 	retrieveCommands() map[string]Command
-	retrieveHelp() string
+	retrieveHelp() (string, string)
 }
 
 func init() {

@@ -14,6 +14,7 @@ import (
 
 type ImageModule struct {
 	ImageCommands map[string]Command
+	HelpString	  string
 }
 
 func (cmd *ImageModule) setup() {
@@ -70,8 +71,10 @@ func (cmd *ImageModule) retrieveCommands() map[string]Command {
 	return cmd.ImageCommands
 }
 
-func (cmd *ImageModule) retrieveHelp() string {
-	return ""
+func (cmd *ImageModule) retrieveHelp() (moduleName string, info string) {
+	moduleName = "Image Module"
+	info = commandsToHelp(&cmd.HelpString, cmd.ImageCommands)
+	return
 }
 
 func (cmd *ImageModule) execute(s *discordgo.Session, m *discordgo.MessageCreate, msg SentMessageData, serverData *ServerData) {

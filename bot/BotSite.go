@@ -60,8 +60,6 @@ func (h *HttpServer) updateServerCommands(id string, data *ServerData) string {
 	var commandList string
 
 	if len(keys) > 0 {
-		commandList = "This is a list of all custom commands.\n"
-
 		sort.Strings(keys)
 
 		for _, v := range keys {
@@ -71,8 +69,6 @@ func (h *HttpServer) updateServerCommands(id string, data *ServerData) string {
 	} else {
 		commandList = fmt.Sprintf("There are no custom commands yet. Use `%saddcommand` to add your first command!", data.Key)
 	}
-
-	commandList = fmt.Sprintf("%s \n\nUse %scommandlist for a list of default commands.", commandList, data.Key)
 
 	res[url] = commandList
 	response := fmt.Sprintf("%s/%s", BotConfig.WebsiteUrl, url)

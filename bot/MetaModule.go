@@ -10,6 +10,7 @@ import (
 // It is impossible to turn off this module.
 type MetaModule struct {
 	MetaCommands map[string]Command
+	HelpString	string
 }
 
 func (cmd *MetaModule) setup() {
@@ -53,7 +54,7 @@ func (cmd *MetaModule) setup() {
 	cmd.MetaCommands["help"] = helpCommand
 
 	commandListCommand := Command{
-		Name:        "commandlist",
+		Name:        "commands",
 		Description: "Lists all default commands",
 		Usage:       "Usage: `%scommandlist`",
 		Permission:  discordgo.PermissionSendMessages,
@@ -87,8 +88,10 @@ func (cmd *MetaModule) retrieveCommands() map[string]Command {
 	return cmd.MetaCommands
 }
 
-func (cmd *MetaModule) retrieveHelp() string {
-	return ""
+func (cmd *MetaModule) retrieveHelp() (moduleName string, info string) {
+	moduleName = "Core Module"
+	info = commandsToHelp(&cmd.HelpString, cmd.MetaCommands)
+	return
 }
 
 func (cmd *MetaModule) execute(s *discordgo.Session, m *discordgo.MessageCreate, msg SentMessageData, serverData *ServerData) {
@@ -155,10 +158,29 @@ func setKeyCommand(command Command, s *discordgo.Session, msg SentMessageData, d
 }
 
 func commandListCommands(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	result := fmt.Sprintf("This help command is currently under construction, use `%shelp <commandname>`"+
-		" for an in-depth description of commands.\n\n", data.Key)
+	url := HServer.updateServerCommands(data.ID, data)
+	result := fmt.Sprintf("use `%shelp <commandname>` for an in-depth description of commands.\n" +
+		"The custom commands for this server can be found at %s\n", data.Key, url)
 
-	s.ChannelMessageSend(msg.ChannelID, result)
+	embed := NewEmbed().
+		SetDescription(result).
+		SetAuthorFromUser(msg.Author).
+		SetColorFromUser(s, msg.ChannelID, msg.Author)
+
+	// Not using a for loop since we want the modules to be printed in a specific order.
+	name, info := Modules["MetaModule"].retrieveHelp()
+	embed.AddField(name, info)
+
+	name, info = Modules["ModerationModule"].retrieveHelp()
+	embed.AddField(name, info)
+
+	name, info = Modules["CommandModule"].retrieveHelp()
+	embed.AddField(name, info)
+
+	name, info = Modules["ImageModule"].retrieveHelp()
+	embed.AddField(name, info)
+
+	s.ChannelMessageSendEmbed(msg.ChannelID, embed.MessageEmbed)
 }
 
 // Add a commander to the list of commanders.

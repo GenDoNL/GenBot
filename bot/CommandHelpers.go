@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 	"unicode"
+	"fmt"
 )
 
 // This function parse a discord.MessageCreate into a SentMessageData struct.
@@ -271,5 +272,29 @@ func getCommandTarget(s *discordgo.Session, msg SentMessageData, data *ServerDat
 			target = msg.Author
 		}
 	}
+	return
+}
+
+func commandsToHelp(helpString *string, commands map[string]Command) (info string){
+	// If help string is already cached, return
+	if *helpString != "" {
+		info = *helpString
+		return
+	}
+
+	// Create help string
+	uniqueCommands := map[string]bool{}
+	for _, command := range commands {
+		if !uniqueCommands[command.Name] {
+			uniqueCommands[command.Name] = true
+			if info == "" {
+				info = command.Name
+			} else {
+				info = fmt.Sprintf("%s, %s", info, command.Name)
+			}
+		}
+	}
+
+	*helpString = info
 	return
 }
