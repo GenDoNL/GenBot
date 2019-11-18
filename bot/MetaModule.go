@@ -240,7 +240,7 @@ func addBlockedCommand(command Command, s *discordgo.Session, msg SentMessageDat
 
 	data.BlockedCommands[msg.Content[0]] = true
 	writeServerDataDB(data)
-	result = fmt.Sprintf("Blocked `%s`, use `%sunblock %s` to unblock to command.", msg.Content[0], data.Key, msg.Content[0])
+	result = fmt.Sprintf("Blocked `%s`, use `%sunblock %s` to unblock the command.", msg.Content[0], data.Key, msg.Content[0])
 	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
 
 }
