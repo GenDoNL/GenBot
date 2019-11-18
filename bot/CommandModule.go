@@ -195,7 +195,7 @@ func delCommandCommand(command Command, s *discordgo.Session, msg SentMessageDat
 		result = fmt.Sprintf(command.Usage, data.Key)
 	} else if _, ok := data.CustomCommands[msg.Content[0]]; ok {
 		delete(data.CustomCommands, msg.Content[0])
-		writeServerData()
+		writeServerDataDB(data)
 		result = fmt.Sprintf("Removed **%s** from the list of commands.", msg.Content[0])
 	} else {
 		result = fmt.Sprintf("The command **%s** has not been found.", msg.Content[0])
@@ -238,7 +238,7 @@ func addMeIrlCommand(command Command, s *discordgo.Session, msg SentMessageData,
 	}
 
 	data.MeIrlData[id] = &MeIrlData{id, nick, content}
-	writeServerData()
+	writeServerDataDB(data)
 	result = fmt.Sprintf("Added %s%s", data.Key, cmd)
 	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
 }
@@ -269,7 +269,7 @@ func delMeIrlCommand(command Command, s *discordgo.Session, msg SentMessageData,
 		}
 	}
 
-	writeServerData()
+	writeServerDataDB(data)
 	result = fmt.Sprintf("Removed the %sme_irl Command for <@%s>.", msg.Key, id)
 	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
 }

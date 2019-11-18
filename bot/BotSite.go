@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"sort"
+	"time"
 )
 
 type HttpServer struct {
@@ -14,10 +18,25 @@ type HttpServer struct {
 var res map[string]string
 
 func (h *HttpServer) start() {
+	var err error
 	res = make(map[string]string)
 
-	for _, v := range Servers {
-		HServer.updateServerCommands(v.ID, v)
+	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+
+	var cur *mongo.Cursor
+	cur, err = serverCollection.Find(ctx, bson.M{})
+
+	if err != nil {
+		log.Error(err)
+	}
+
+	for cur.Next(ctx) {
+		var result ServerData
+		err := cur.Decode(&result)
+		if err != nil {
+			log.Error(err)
+		}
+		HServer.updateServerCommands(result.ID, &result)
 	}
 
 	http.HandleFunc("/", h.handleServer())
