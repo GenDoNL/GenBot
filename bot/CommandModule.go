@@ -421,7 +421,7 @@ func colorCommand(command Command, s *discordgo.Session, msg SentMessageData, da
 	color := s.State.UserColor(target.ID, msg.ChannelID)
 
 	result := NewEmbed().
-		SetAuthorFromUser(msg.Author).
+		SetAuthorFromUser(target).
 		SetColor(color).
 		SetDescription(fmt.Sprintf("\n#%x\n", color))
 
