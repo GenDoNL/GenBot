@@ -213,7 +213,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	msg := parseMessage(m)
 
-	serverData := getServerDataDB(s, m.ChannelID)
+	serverData := getServerDataFromChannel(s, m.ChannelID)
 
 	if blocked, ok := serverData.BlockedCommands[msg.Command]; ok && blocked {
 		return

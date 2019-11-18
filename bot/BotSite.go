@@ -30,28 +30,37 @@ func (h *HttpServer) start() {
 		log.Error(err)
 	}
 
+	// Fill the map will all known servers and their hashes
 	for cur.Next(ctx) {
 		var result ServerData
 		err := cur.Decode(&result)
 		if err != nil {
 			log.Error(err)
 		}
-		HServer.updateServerCommands(result.ID, &result)
+
+		url := h.getPathFromID(result.ID)
+		res[url] = result.ID
 	}
 
 	http.HandleFunc("/", h.handleServer())
 	http.ListenAndServe(":80", nil)
 }
 
-func getUrlFromID(id string) string {
-	b64 := base64.StdEncoding.EncodeToString(sha1.New().Sum([]byte(id))[:7])
+func (h *HttpServer) getPathFromID(guildID string) string {
+	b64 := base64.StdEncoding.EncodeToString(sha1.New().Sum([]byte(guildID))[:7])
 	return b64[:5]
 }
 
-func (h *HttpServer) updateServerCommands(id string, data *ServerData) string {
-	url := getUrlFromID(id)
+func (h *HttpServer) getUrlFromID(guildID string) string {
+	url := h.getPathFromID(guildID)
+	return fmt.Sprintf("%s/%s", BotConfig.WebsiteUrl, url)
+}
 
+// Convert the data of a server into a string
+func (h *HttpServer) getSite(guildID string) string {
 	var keys []string
+
+	data := getServerData(guildID)
 
 	for k := range data.CustomCommands {
 		keys = append(keys, k)
@@ -70,16 +79,14 @@ func (h *HttpServer) updateServerCommands(id string, data *ServerData) string {
 		commandList = fmt.Sprintf("There are no custom commands yet. Use `%saddcommand` to add your first command!", data.Key)
 	}
 
-	res[url] = commandList
-	response := fmt.Sprintf("%s/%s", BotConfig.WebsiteUrl, url)
-	return response
+	return commandList
 }
 
 func (h *HttpServer) handleServer() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		if commands, ok := res[r.URL.Path[1:]]; ok {
-			fmt.Fprintf(w, commands)
+		if id, ok := res[r.URL.Path[1:]]; ok {
+			fmt.Fprintf(w, h.getSite(id))
 		}
 
 	}

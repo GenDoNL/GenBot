@@ -309,7 +309,7 @@ func rollCommand(command Command, s *discordgo.Session, msg SentMessageData, dat
 }
 
 func customCommandListCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	url := HServer.updateServerCommands(data.ID, data)
+	url := HServer.getUrlFromID(data.ID)
 
 	result := fmt.Sprintf("The full list of commands for this server can be found here: %s", url)
 

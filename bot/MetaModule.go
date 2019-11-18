@@ -117,7 +117,7 @@ func (cmd *MetaModule) execute(s *discordgo.Session, m *discordgo.MessageCreate,
 func helpCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
 	// Default help command
 	if len(msg.Content) != 1 {
-		commandUrl := HServer.updateServerCommands(data.ID, data)
+		commandUrl := HServer.getUrlFromID(data.ID)
 
 		result := fmt.Sprintf("Heya, This is GenBot written by GenDoNL#8196. \n"+
 			"For a list of built-in commands use **%scommandlist**. \n"+
@@ -158,7 +158,7 @@ func setKeyCommand(command Command, s *discordgo.Session, msg SentMessageData, d
 }
 
 func commandListCommands(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	url := HServer.updateServerCommands(data.ID, data)
+	url := HServer.getUrlFromID(data.ID)
 	result := fmt.Sprintf("use `%shelp <commandname>` for an in-depth description of commands.\n" +
 		"The custom commands for this server can be found at %s\n", data.Key, url)
 

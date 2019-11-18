@@ -50,25 +50,31 @@ func parseMention(str string) (string, error) {
 	return res, nil
 }
 
-// Returns the ServerData of a server, given a message object.
-func getServerDataDB(s *discordgo.Session, channelID string) *ServerData {
+func getServerDataFromChannel(s *discordgo.Session, channelID string) *ServerData {
 	channel, _ := s.Channel(channelID)
 
-	servID := channel.GuildID
+	guildID := channel.GuildID
+
+	return getServerData(guildID)
+}
+
+// Returns the ServerData of a server, given a message object.
+func getServerData(guildID string) *ServerData {
 
 	//var err error
-	filter := bson.M{"id": servID}
+	filter := bson.M{"id": guildID}
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+
 	var data ServerData
 	err := serverCollection.FindOne(ctx, filter).Decode(&data)
 
 	if err != nil {
 		log.Error(err.Error())
-		data = ServerData{ID: servID, Key: "!"}
+		data = ServerData{ID: guildID, Key: "!"}
 
-		err2 := writeServerDataDB(&data)
-		if err2 != nil {
-			log.Fatal(err2)
+		err = writeServerDataDB(&data)
+		if err != nil {
+			log.Fatal(err)
 		}
 	}
 
