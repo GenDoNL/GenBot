@@ -400,11 +400,13 @@ func weatherCommand(command Command, s *discordgo.Session, msg SentMessageData, 
 		"southeast", "south-southeast", "south", "south-southwest", "southwest", "west-southwest", "west", "west-northwest", "northwest", "north-northwest"}
 	windDirection := directions[(directionVal % 16)]
 
+	flag := fmt.Sprintf(":flag_%s:", strings.ToLower(owm.Sys.Country))
+
 	result := NewEmbed().
 		SetAuthorFromUser(msg.Author).
 		SetColorFromUser(s, msg.ChannelID, msg.Author).
 		SetThumbnail(iconUrl).
-		SetTitle(fmt.Sprintf("Current weather in **%s (%s)** at **%s**", owm.Name, owm.Sys.Country, localTime)).
+		SetTitle(fmt.Sprintf("%s Weather in **%s** at **%s**", flag, owm.Name, localTime)).
 		AddField("Current Conditions:", fmt.Sprintf("**%s** at **%.1f°C** / **%.1f°F**",
 			owm.Weather[0].Description, owm.Main.Temp, fahr)).
 		AddInlineField("Humidity", fmt.Sprintf("%d%%", owm.Main.Humidity), true).
