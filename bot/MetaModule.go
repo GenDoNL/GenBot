@@ -134,8 +134,14 @@ func helpCommand(command Command, s *discordgo.Session, msg SentMessageData, dat
 
 		if command, ok := cmd[msg.Content[0]]; ok {
 			tempUsage := fmt.Sprintf(command.Usage, msg.Key)
-			result := fmt.Sprintf("***%s***\nDescription: %s\n\n%s\n", command.Name, command.Description, tempUsage)
-			s.ChannelMessageSend(msg.ChannelID, result)
+			result := NewEmbed().
+				SetAuthorFromUser(msg.Author).
+				SetColorFromUser(s, msg.ChannelID, msg.Author).
+				SetTitle(fmt.Sprintf("%s%s", data.Key, command.Name)).
+				SetDescription(command.Description).
+				AddField("Usage", tempUsage)
+
+			s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		}
 	}
 }
