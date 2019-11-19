@@ -20,7 +20,7 @@ func (cmd *MetaModule) setup() {
 		Name: "addcommander",
 		Description: "This command adds a user as commander. Being a commander overwrites " +
 			"the full permission system of the bot and will allow a user to execute any command.",
-		Usage:      "Usage: `%saddcommander <@user>`",
+		Usage:      "`%saddcommander <@user>`",
 		Permission: discordgo.PermissionManageServer,
 		Execute:    addCommanderCommand,
 	}
@@ -29,7 +29,7 @@ func (cmd *MetaModule) setup() {
 	delCommanderCommand := Command{
 		Name:        "delcommander",
 		Description: "This command removes a user as commander.",
-		Usage:       "Usage: `%sdelcommander <@user>`",
+		Usage:       "`%sdelcommander <@user>`",
 		Permission:  discordgo.PermissionManageServer,
 		Execute:     delCommanderCommand,
 	}
@@ -38,7 +38,7 @@ func (cmd *MetaModule) setup() {
 	setKeyCommand := Command{
 		Name:        "setkey",
 		Description: "Changes the key the bot listens to",
-		Usage:       "Usage: `%ssetkey <key>` (Note: key should be of length 1)",
+		Usage:       "`%ssetkey <key>` (Note: key should be of length 1)",
 		Permission:  discordgo.PermissionManageServer,
 		Execute:     setKeyCommand,
 	}
@@ -47,7 +47,7 @@ func (cmd *MetaModule) setup() {
 	helpCommand := Command{
 		Name:        "help",
 		Description: "Help provides you with more information about any default command.",
-		Usage:       "Usage: `%shelp <command name>`",
+		Usage:       "`%shelp <command name>`",
 		Permission:  discordgo.PermissionSendMessages,
 		Execute:     helpCommand,
 	}
@@ -56,7 +56,7 @@ func (cmd *MetaModule) setup() {
 	commandListCommand := Command{
 		Name:        "commands",
 		Description: "Lists all default commands",
-		Usage:       "Usage: `%scommandlist`",
+		Usage:       "`%scommandlist`",
 		Permission:  discordgo.PermissionSendMessages,
 		Execute:     commandListCommands,
 	}
@@ -67,7 +67,7 @@ func (cmd *MetaModule) setup() {
 	blockCommand := Command{
 		Name:        "block",
 		Description: "Blocks the given command for everyone",
-		Usage:       "Usage: `%sblock <commandname>`",
+		Usage:       "`%sblock <commandname>`",
 		Permission:  discordgo.PermissionManageServer,
 		Execute:     addBlockedCommand,
 	}
@@ -76,7 +76,7 @@ func (cmd *MetaModule) setup() {
 	unblockCommand := Command{
 		Name:        "unblock",
 		Description: "Unblocks the given command",
-		Usage:       "Usage: `%sunblock <commandname>`",
+		Usage:       "`%sunblock <commandname>`",
 		Permission:  discordgo.PermissionManageServer,
 		Execute:     delBlockedCommand,
 	}
@@ -133,18 +133,14 @@ func helpCommand(command Command, s *discordgo.Session, msg SentMessageData, dat
 		cmd := module.retrieveCommands()
 
 		if command, ok := cmd[msg.Content[0]]; ok {
-			tempUsage := fmt.Sprintf(command.Usage, msg.Key)
-			result := NewEmbed().
-				SetAuthorFromUser(msg.Author).
-				SetColorFromUser(s, msg.ChannelID, msg.Author).
-				SetTitle(fmt.Sprintf("%s%s", data.Key, command.Name)).
-				SetDescription(command.Description).
-				AddField("Usage", tempUsage)
+			result := createUsageInfo(command, msg, s, data)
 
 			s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		}
 	}
 }
+
+
 
 // Change the command key of the server.
 // Key should be the first argument and only 1 char long.
@@ -152,7 +148,9 @@ func setKeyCommand(command Command, s *discordgo.Session, msg SentMessageData, d
 	var result string
 
 	if len(msg.Content) == 0 {
-		result = fmt.Sprintf(command.Usage, data.Key)
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
+		return
 	} else if len(msg.Content[0]) == 1 {
 		data.Key = msg.Content[0]
 		writeServerDataDB(data)
@@ -199,16 +197,16 @@ func addCommanderCommand(command Command, s *discordgo.Session, msg SentMessageD
 	var result string
 
 	if len(msg.Content) == 0 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		return
 	}
 
 	userID, err := parseMention(msg.Content[0])
 
 	if err != nil {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		return
 	}
 
@@ -229,16 +227,16 @@ func delCommanderCommand(command Command, s *discordgo.Session, msg SentMessageD
 	var result string
 
 	if len(msg.Content) == 0 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		return
 	}
 
 	userID, err := parseMention(msg.Content[0])
 
 	if err != nil {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		return
 	}
 
@@ -256,8 +254,8 @@ func addBlockedCommand(command Command, s *discordgo.Session, msg SentMessageDat
 	var result string
 
 	if len(msg.Content) == 0 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		return
 	}
 
@@ -281,8 +279,8 @@ func delBlockedCommand(command Command, s *discordgo.Session, msg SentMessageDat
 	var result string
 
 	if len(msg.Content) == 0 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		return
 	}
 

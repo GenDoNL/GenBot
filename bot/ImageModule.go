@@ -30,7 +30,7 @@ func (cmd *ImageModule) setup() {
 	addAlbumCommand := Command{
 		Name:        "addalbum",
 		Description: "This command adds an album to this channel. Images can be retrieved at random using the `i` or `image` command.",
-		Usage:       "Usage: `%saddalbum <imgur album id>`",
+		Usage:       "`%saddalbum <imgur album id>`",
 		Permission:  discordgo.PermissionManageServer,
 		Execute:     addAlbumCommand,
 	}
@@ -39,7 +39,7 @@ func (cmd *ImageModule) setup() {
 	delAlbumCommand := Command{
 		Name:        "delalbum",
 		Description: "This command removes an album from this channel.",
-		Usage:       "Usage: `%sdelalbum <imgur album id>`",
+		Usage:       "`%sdelalbum <imgur album id>`",
 		Permission:  discordgo.PermissionManageServer,
 		Execute:     delAlbumCommand,
 	}
@@ -48,7 +48,7 @@ func (cmd *ImageModule) setup() {
 	imageCommand := Command{
 		Name:        "image",
 		Description: "This command sends a random image from an album added by `addalbum`",
-		Usage:       "Usage: `%si`",
+		Usage:       "`%simage`",
 		Permission:  discordgo.PermissionSendMessages,
 		Execute:     getImageCommand,
 	}
@@ -58,7 +58,7 @@ func (cmd *ImageModule) setup() {
 	sauceCommand := Command{
 		Name:        "sauce",
 		Description: "Provides the source of an image. A direct link to an image should be provided.",
-		Usage:       "Usage: `%ssource <URL>`",
+		Usage:       "`%ssource <URL>`",
 		Permission:  discordgo.PermissionSendMessages,
 		Execute:     getSauceCommand,
 	}
@@ -100,11 +100,9 @@ func (cmd *ImageModule) execute(s *discordgo.Session, m *discordgo.MessageCreate
 func addAlbumCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
 	checkChannelsMap(data)
 
-	var result string
-
 	if len(msg.Content) == 0 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		return
 	}
 
@@ -140,8 +138,8 @@ func delAlbumCommand(command Command, s *discordgo.Session, msg SentMessageData,
 	var result string
 
 	if len(msg.Content) == 0 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		return
 	}
 

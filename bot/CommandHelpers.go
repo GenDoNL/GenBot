@@ -36,6 +36,7 @@ func parseMessage(m *discordgo.MessageCreate) SentMessageData {
 
 // This function a string into an ID if the string is a mention.
 func parseMention(str string) (string, error) {
+	// TODO: Use Regex
 	if len(str) < 5 || (string(str[0]) != "<" || string(str[1]) != "@" || string(str[len(str)-1]) != ">") {
 		return "", errors.New("error while parsing mention, this is not an user")
 	}
@@ -208,7 +209,7 @@ func findLastMessageWithAttachOrEmbed(s *discordgo.Session, msg SentMessageData,
 	}
 
 	result = ""
-	e = errors.New("Unable to find message with attachment or embed")
+	e = errors.New("unable to find message with attachment or embed")
 	return
 }
 
@@ -303,4 +304,15 @@ func commandsToHelp(helpString *string, commands map[string]Command) (info strin
 
 	*helpString = info
 	return
+}
+
+func createUsageInfo(command Command, msg SentMessageData, s *discordgo.Session, data *ServerData) *Embed {
+	tempUsage := fmt.Sprintf(command.Usage, msg.Key)
+	result := NewEmbed().
+		SetAuthorFromUser(msg.Author).
+		SetColorFromUser(s, msg.ChannelID, msg.Author).
+		SetTitle(fmt.Sprintf("%s%s", data.Key, command.Name)).
+		SetDescription(command.Description).
+		AddField("Usage", tempUsage)
+	return result
 }

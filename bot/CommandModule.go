@@ -21,8 +21,8 @@ func (cmd *CommandModule) setup() {
 
 	addCommand := Command{
 		Name:        "addcommand",
-		Description: "Adds a custom command",
-		Usage:       "Usage: `%saddcommand <command name> <response>`",
+		Description: "Adds a custom command to this server",
+		Usage:       "`%saddcommand <command name> <response>`",
 		Permission:  discordgo.PermissionManageServer,
 		Execute:     addCommandCommand,
 	}
@@ -31,7 +31,7 @@ func (cmd *CommandModule) setup() {
 	delCommand := Command{
 		Name:        "addcommand",
 		Description: "Removes a custom command",
-		Usage:       "Usage: `%sdelcommand <command name>`",
+		Usage:       "`%sdelcommand <command name>`",
 		Permission:  discordgo.PermissionManageServer,
 		Execute:     delCommandCommand,
 	}
@@ -39,8 +39,9 @@ func (cmd *CommandModule) setup() {
 
 	addMeIrlCommand := Command{
 		Name:        "addme_irl",
-		Description: "Add a me_irl",
-		Usage:       "Usage: `%saddme_irl <@User> <Nickname> <Content>`",
+		Description: "Add a me_irl, users can access this command themselves by using `me_irl`. " +
+			"Other users can access the comment by using `<nick>_irl`",
+		Usage:       "`%saddme_irl <@User> <Nickname> <Content>`",
 		Permission:  discordgo.PermissionManageServer,
 		Execute:     addMeIrlCommand,
 	}
@@ -50,7 +51,7 @@ func (cmd *CommandModule) setup() {
 	delMeIrlCommand := Command{
 		Name:        "delme_irl",
 		Description: "Delete a me_irl",
-		Usage:       "Usage: `%sdelme_irl <@User>`",
+		Usage:       "`%sdelme_irl <@User>`",
 		Permission:  discordgo.PermissionManageServer,
 		Execute:     delMeIrlCommand,
 	}
@@ -60,7 +61,7 @@ func (cmd *CommandModule) setup() {
 	meirlCommand := Command{
 		Name:        "me_irl",
 		Description: "This commands sends your irl, given that you have an irl. You can add an me_irl by using `addme_irl`",
-		Usage:       "Usage: `%sme_irl`",
+		Usage:       "`%sme_irl`",
 		Permission:  discordgo.PermissionSendMessages,
 		Execute:     meIrlCommand,
 	}
@@ -69,8 +70,8 @@ func (cmd *CommandModule) setup() {
 
 	customCommandListCommand := Command{
 		Name:        "customcommands",
-		Description: "Lists all the server specific commands",
-		Usage:       "Usage: `%scustomcommands`",
+		Description: "Provides a list of all the server-specific commands",
+		Usage:       "`%scustomcommands`",
 		Permission:  discordgo.PermissionSendMessages,
 		Execute:     customCommandListCommand,
 	}
@@ -80,7 +81,7 @@ func (cmd *CommandModule) setup() {
 	rollCommand := Command{
 		Name:        "roll",
 		Description: "Rolls a random number between 0 and the upper bound provided (0 and the upper bound included). Upper bound defaults to 100.",
-		Usage:       "Usage: `%sroll <upper bound(optional)>`",
+		Usage:       "`%sroll <upper bound(optional)>`",
 		Permission:  discordgo.PermissionSendMessages,
 		Execute:     rollCommand,
 	}
@@ -89,7 +90,7 @@ func (cmd *CommandModule) setup() {
 	avatarCommand := Command{
 		Name:        "avatar",
 		Description: "Sends the full-size version of the mentioned user's avatar, or the message author if no-one is mentioned.",
-		Usage:       "Usage: `%savatar <@User(Optional)>",
+		Usage:       "`%savatar <@User(Optional)>",
 		Permission:  discordgo.PermissionSendMessages,
 		Execute:     avatarCommand,
 	}
@@ -100,7 +101,7 @@ func (cmd *CommandModule) setup() {
 	whoIsCommand := Command{
 		Name:        "whois",
 		Description: "Sends member data of the mentioned user, or the message author if no-one is mentioned.",
-		Usage:       "Usage: `%swhois <@User(Optional)>",
+		Usage:       "`%swhois <@User(Optional)>",
 		Permission:  discordgo.PermissionSendMessages,
 		Execute:     whoIsCommand,
 	}
@@ -111,7 +112,7 @@ func (cmd *CommandModule) setup() {
 	weatherCommand := Command{
 		Name:        "weather",
 		Description: "Send the current weather for the given city.",
-		Usage:       "Usage: `%sweather <City>`",
+		Usage:       "`%sweather <City>`",
 		Permission:  discordgo.PermissionSendMessages,
 		Execute:     weatherCommand,
 	}
@@ -120,7 +121,7 @@ func (cmd *CommandModule) setup() {
 	colorCommand := Command{
 		Name:        "color",
 		Description: "Send the hex of the mentioned user, or the message author if no-one is mentioned.",
-		Usage:       "Usage: `%scolor <@User(Optional)>`",
+		Usage:       "`%scolor <@User(Optional)>`",
 		Permission:  discordgo.PermissionSendMessages,
 		Execute:     colorCommand,
 	}
@@ -171,17 +172,19 @@ func addCommandCommand(command Command, s *discordgo.Session, msg SentMessageDat
 
 	var result string
 
-	if len(msg.Content) > 1 {
-		err := createCommand(data, msg.Content[0], strings.Join(msg.Content[1:], " "))
-
-		if err != nil {
-			result = fmt.Sprintf("Cannot add new commands that contain newlines in the name.")
-		} else {
-			result = fmt.Sprintf("Added **%s** to the list of commands.", msg.Content[0])
-		}
-	} else {
-		result = fmt.Sprintf(command.Usage, data.Key)
+	if len(msg.Content) <= 1 {
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
+		return
 	}
+
+	err := createCommand(data, msg.Content[0], strings.Join(msg.Content[1:], " "))
+	if err != nil {
+		result = fmt.Sprintf("Cannot add new commands that contain newlines in the name.")
+	} else {
+		result = fmt.Sprintf("Added **%s** to the list of commands.", msg.Content[0])
+	}
+
 
 	s.ChannelMessageSend(msg.ChannelID, result)
 }
@@ -195,8 +198,12 @@ func delCommandCommand(command Command, s *discordgo.Session, msg SentMessageDat
 	var result string
 
 	if len(msg.Content) == 0 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-	} else if _, ok := data.CustomCommands[msg.Content[0]]; ok {
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
+		return
+	}
+
+	if _, ok := data.CustomCommands[msg.Content[0]]; ok {
 		delete(data.CustomCommands, msg.Content[0])
 		writeServerDataDB(data)
 		result = fmt.Sprintf("Removed **%s** from the list of commands.", msg.Content[0])
@@ -212,16 +219,16 @@ func addMeIrlCommand(command Command, s *discordgo.Session, msg SentMessageData,
 	var result string
 
 	if len(msg.Content) < 3 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		return
 	}
 
 	id, err := parseMention(msg.Content[0])
 
 	if err != nil {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		return
 	}
 
@@ -251,16 +258,16 @@ func delMeIrlCommand(command Command, s *discordgo.Session, msg SentMessageData,
 	var result string
 
 	if len(msg.Content) < 1 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		return
 	}
 
 	id, err := parseMention(msg.Content[0])
 
 	if err != nil {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		return
 	}
 
@@ -381,7 +388,8 @@ func weatherCommand(command Command, s *discordgo.Session, msg SentMessageData, 
 	}
 
 	if len(msg.Content) == 0 {
-		_, _ = s.ChannelMessageSend(msg.ChannelID, fmt.Sprintf(command.Usage, data.Key))
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		return
 	}
 

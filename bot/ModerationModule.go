@@ -18,7 +18,7 @@ func (cmd *ModerationModule) setup() {
 		Name: "prune",
 		Description: "This command prunes messages up to the provided amount. " +
 			"If a user is mentioned, the command will only prune messages sent by this user.",
-		Usage:      "Usage: `%sprune <amount(1-100)> <@user(optional, multiple)>`",
+		Usage:      "`%sprune <amount(1-100)> <@user(optional, multiple)>`",
 		Permission: discordgo.PermissionManageMessages,
 		Execute:    pruneCommand,
 	}
@@ -27,7 +27,7 @@ func (cmd *ModerationModule) setup() {
 	lockCommand := Command{
 		Name:        "lock",
 		Description: "This command disallows the `everyone` role to speak in the current channel.",
-		Usage:       "Usage: `%slock`",
+		Usage:       "`%slock`",
 		Permission:  discordgo.PermissionManageMessages,
 		Execute:     lockChannelCommand,
 	}
@@ -36,7 +36,7 @@ func (cmd *ModerationModule) setup() {
 	unlockCommand := Command{
 		Name:        "unlock",
 		Description: "This command allows the `everyone` role to speak in the current channel.",
-		Usage:       "Usage: `%sunlock`",
+		Usage:       "`%sunlock`",
 		Permission:  discordgo.PermissionManageServer,
 		Execute:     unlockChannelCommand,
 	}
@@ -75,11 +75,9 @@ func (cmd *ModerationModule) execute(s *discordgo.Session, m *discordgo.MessageC
 
 // Handles pruning of messages
 func pruneCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
-	var result string
-
 	if len(msg.Content) == 0 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		return
 	}
 
@@ -88,8 +86,8 @@ func pruneCommand(command Command, s *discordgo.Session, msg SentMessageData, da
 	amount, err := strconv.Atoi(msg.Content[0])
 
 	if err != nil || amount < 1 || amount > 100 {
-		result = fmt.Sprintf(command.Usage, data.Key)
-		_, _ = s.ChannelMessageSend(msg.ChannelID, result)
+		result := createUsageInfo(command, msg, s, data)
+		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		return
 	}
 
@@ -112,8 +110,8 @@ func pruneCommand(command Command, s *discordgo.Session, msg SentMessageData, da
 	s.ChannelMessagesBulkDelete(msg.ChannelID, msgID)
 
 	// Send a confirmation.
-	result = fmt.Sprintf("Pruned **%s** message(s).", strconv.Itoa(count))
-	_, _ = s.ChannelMessageSend(msg.ChannelID, "Pruned **"+strconv.Itoa(count)+"** message(s).")
+	result := fmt.Sprintf("Pruned **%s** message(s).", strconv.Itoa(count))
+	_, _ = s.ChannelMessageSend(msg.ChannelID, result)
 
 }
 
