@@ -125,8 +125,12 @@ func lockChannelCommand(command Command, s *discordgo.Session, msg SentMessageDa
 	sv, _ := s.Guild(data.ID)
 
 	everyonePerms, err := getRolePermissionsByName(ch, sv, "@everyone")
+	botPerm, _ := s.UserChannelPermissions(BotID, msg.ChannelID)
 
-	//deny sending messages and update it
+	// Ensure that bot is still able to talk after lock
+	err = s.ChannelPermissionSet(ch.ID, BotID, "member", botPerm|0x800, botPerm&^0x800)
+
+	// Lock everyone role out
 	err = s.ChannelPermissionSet(ch.ID, everyonePerms.ID, everyonePerms.Type, everyonePerms.Allow&^0x800, everyonePerms.Deny|0x800)
 
 	var result string
