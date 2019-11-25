@@ -85,11 +85,18 @@ func animeInfoCommand(command Command, s *discordgo.Session, msg SentMessageData
 
 	description := strings.Split(res.Description, "<br>")[0]
 
+	var title string
+	if res.Title.English != "" {
+		title = res.Title.English
+	} else {
+		title = res.Title.Native
+	}
+
 	result := NewEmbed().
 		SetAuthorFromUser(msg.Author).
 		SetColor(int(color)).
 		SetThumbnail(res.CoverImage.Medium).
-		SetTitle(res.Title.English).
+		SetTitle(title).
 		SetURL(res.SiteUrl).
 		SetDescription(description).
 		AddInlineField("Episodes", strconv.Itoa(res.Episodes), true).
