@@ -53,10 +53,6 @@ func (cmd *AnimeModule) execute(s *discordgo.Session, m *discordgo.MessageCreate
 		} else {
 			log.Infof("Use of %s command denied for permission level %d", command.Name, perm)
 		}
-	} else if cmd, ok := serverData.CustomCommands[msg.Command]; ok {
-		log.Infof("Executing custom command `%s` in server `%s` ", cmd.Name, serverData.ID)
-
-		s.ChannelMessageSend(m.ChannelID, cmd.Content)
 	}
 }
 
