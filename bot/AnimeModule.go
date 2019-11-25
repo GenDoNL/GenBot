@@ -73,6 +73,7 @@ func animeInfoCommand(command Command, s *discordgo.Session, msg SentMessageData
 
 	res, err := a.Media(anilistgo.MediaVariables{
 		SearchQuery: animeName,
+		Type: "ANIME",
 	})
 
 	if err != nil {
