@@ -128,6 +128,7 @@ func setupModules() {
 	Modules["CommandModule"] = &CommandModule{}
 	Modules["ModerationModule"] = &ModerationModule{}
 	Modules["ImageModule"] = &ImageModule{}
+	Modules["AnimeModule"] = &AnimeModule{}
 	// Modules["OsuModule"] = &OsuModule{}, // Temporarily disable osu module until it is configurable
 
 	for _, module := range Modules {

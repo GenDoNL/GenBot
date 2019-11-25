@@ -40,7 +40,7 @@ func (cmd *CommandModule) setup() {
 	addMeIrlCommand := Command{
 		Name:        "addme_irl",
 		Description: "Add a me_irl, users can access this command themselves by using `me_irl`. " +
-			"Other users can access the comment by using `<nick>_irl`",
+			"Other users can access the comment by using `<Nickname>_irl`",
 		Usage:       "`%saddme_irl <@User> <Nickname> <Content>`",
 		Permission:  discordgo.PermissionManageServer,
 		Execute:     addMeIrlCommand,
@@ -136,7 +136,7 @@ func (cmd *CommandModule) retrieveCommands() map[string]Command {
 }
 
 func (cmd *CommandModule) retrieveHelp() (moduleName string, info string) {
-	moduleName = "Default Commands"
+	moduleName = "Core Module"
 	info = commandsToHelp(&cmd.HelpString, cmd.DefaultCommands)
 	return
 }

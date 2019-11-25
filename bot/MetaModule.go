@@ -89,7 +89,7 @@ func (cmd *MetaModule) retrieveCommands() map[string]Command {
 }
 
 func (cmd *MetaModule) retrieveHelp() (moduleName string, info string) {
-	moduleName = "Core Module"
+	moduleName = "Meta Module"
 	info = commandsToHelp(&cmd.HelpString, cmd.MetaCommands)
 	return
 }
