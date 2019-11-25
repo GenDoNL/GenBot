@@ -93,9 +93,8 @@ func animeInfoCommand(command Command, s *discordgo.Session, msg SentMessageData
 	}
 
 	result := NewEmbed().
-		SetAuthorFromUser(msg.Author).
 		SetColor(int(color)).
-		SetThumbnail(res.CoverImage.Medium).
+		SetThumbnail(res.CoverImage.Large).
 		SetTitle(title).
 		SetURL(res.SiteUrl).
 		SetDescription(description).
