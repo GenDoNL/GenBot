@@ -92,7 +92,7 @@ func animeInfoCommand(command Command, s *discordgo.Session, msg SentMessageData
 		SetTitle(res.Title.English).
 		SetURL(res.SiteUrl).
 		SetDescription(description).
-		AddInlineField("Episodes", strconv.Itoa(res.Duration), true).
+		AddInlineField("Episodes", strconv.Itoa(res.Episodes), true).
 		AddInlineField("Mean Score",  fmt.Sprintf("%.1f", float32(res.MeanScore)/10.0), true).
 		SetFooter("This command is still under construction.")
 
