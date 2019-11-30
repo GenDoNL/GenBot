@@ -20,12 +20,21 @@ func (cmd *AnimeModule) setup() {
 	animeInfoCommand := Command{
 		Name:        "anime",
 		Description: "Sends info on the given anime.",
-		Usage:       "`%sanime <anime name>",
+		Usage:       "`%sanime <anime name>`",
 		Permission:  discordgo.PermissionSendMessages,
 		Execute:     animeInfoCommand,
 	}
-
 	cmd.AnimeCommands["anime"] = animeInfoCommand
+
+	mangaInfoCommand := Command{
+		Name:        "manga",
+		Description: "Sends info on the given manga.",
+		Usage:       "`%smanga <manga name>`",
+		Permission:  discordgo.PermissionSendMessages,
+		Execute:     mangaInfoCommand,
+	}
+
+	cmd.AnimeCommands["manga"] = mangaInfoCommand
 }
 
 func (cmd *AnimeModule) retrieveCommands() map[string]Command {
@@ -37,7 +46,6 @@ func (cmd *AnimeModule) retrieveHelp() (moduleName string, info string) {
 	info = commandsToHelp(&cmd.HelpString, cmd.AnimeCommands)
 	return
 }
-
 
 func (cmd *AnimeModule) execute(s *discordgo.Session, m *discordgo.MessageCreate, msg SentMessageData, serverData *ServerData) {
 	if serverData.Key != msg.Key {
@@ -56,22 +64,16 @@ func (cmd *AnimeModule) execute(s *discordgo.Session, m *discordgo.MessageCreate
 	}
 }
 
-func animeInfoCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+func mediaInfoCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
 	if len(msg.Content) == 0 {
 		result := createUsageInfo(command, msg, s, data)
 		s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
 		return
 	}
+	mediaType := strings.ToUpper(command.Name)
+	name := strings.Join(msg.Content, " ")
 
-	animeName := strings.Join(msg.Content, " ")
-
-	a, _ := anilistgo.New()
-
-	res, err := a.Media(anilistgo.MediaVariables{
-		SearchQuery: animeName,
-		Type: "ANIME",
-	})
-
+	res, err := queryBasicMediaInfo(name, mediaType, s, msg)
 	if err != nil {
 		s.ChannelMessageSend(msg.ChannelID, "Unable to find anime with this name.")
 		return
@@ -79,24 +81,82 @@ func animeInfoCommand(command Command, s *discordgo.Session, msg SentMessageData
 
 	color, _ := strconv.ParseInt(strings.Replace(res.CoverImage.Color, "#", "", -1), 16, 32)
 
-	description := strings.Split(res.Description, "<br>")[0]
+	score := fmt.Sprintf("%.1f", float32(res.MeanScore)/10.0)
+	status := strings.Title(strings.ToLower(res.Status))
+	status = strings.Replace(status, "_", " ", -1)
 
-	var title string
-	if res.Title.English != "" {
-		title = res.Title.English
-	} else {
-		title = res.Title.Native
-	}
+	title := parseTitle(res)
+	description := parseDescription(res)
+	episodeChapters := chaptersOrEpisodes(mediaType, res)
 
-	result := NewEmbed().
+	e := NewEmbed().
 		SetColor(int(color)).
 		SetThumbnail(res.CoverImage.Large).
 		SetTitle(title).
 		SetURL(res.SiteUrl).
 		SetDescription(description).
-		AddInlineField("Episodes", strconv.Itoa(res.Episodes), true).
-		AddInlineField("Mean Score",  fmt.Sprintf("%.1f", float32(res.MeanScore)/10.0), true).
-		SetFooter("This command is still under construction.")
+		SetFooter(fmt.Sprintf("Score: %s    Status: %s    %s", score, status, episodeChapters))
 
-	s.ChannelMessageSendEmbed(msg.ChannelID, result.MessageEmbed)
+	s.ChannelMessageSendEmbed(msg.ChannelID, e.MessageEmbed)
+}
+
+func queryBasicMediaInfo(name string, mediaType string, s *discordgo.Session, msg SentMessageData) (res anilistgo.Media, err error) {
+	query := "query ($search: String, $type: MediaType) { Media (search: $search, type: $type) " +
+		"{ id description(asHtml: false) coverImage {large color} title { romaji native } status episodes chapters siteUrl meanScore} }"
+	variables := struct {
+		Search string `json:"search"`
+		Type   string `json:"type"`
+	}{
+		name,
+		mediaType,
+	}
+
+	a, _ := anilistgo.New()
+	res, err = a.Media(query, variables)
+
+	return
+}
+
+func parseTitle(res anilistgo.Media) string {
+	var title string
+	if res.Title.Romaji != "" {
+		title = res.Title.Romaji
+	} else {
+		title = res.Title.Native
+	}
+	return title
+}
+
+func parseDescription(res anilistgo.Media) string {
+	description := strings.Split(res.Description, "<br>")[0]
+	description = strings.Replace(description, "<i>", "*", -1)
+	description = strings.Replace(description, "</i>", "*", -1)
+	return description
+}
+
+func chaptersOrEpisodes(mediaType string, res anilistgo.Media) string {
+	var episodeChapters string
+	if mediaType == "ANIME" {
+		if res.Episodes == 0 {
+			episodeChapters = fmt.Sprintf("Episodes: unknown")
+		} else {
+			episodeChapters = fmt.Sprintf("Episodes: %d", res.Episodes)
+		}
+	} else {
+		if res.Chapters == 0 {
+			episodeChapters = fmt.Sprint("Chapters: unknown")
+		} else {
+			episodeChapters = fmt.Sprintf("Chapters: %d", res.Chapters)
+		}
+	}
+	return episodeChapters
+}
+
+func animeInfoCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+	mediaInfoCommand(command, s, msg, data)
+
+}
+
+func mangaInfoCommand(command Command, s *discordgo.Session, msg SentMessageData, data *ServerData) {
+	mediaInfoCommand(command, s, msg, data)
 }
