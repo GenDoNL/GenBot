@@ -40,11 +40,11 @@ func (c *CoreModule) colorCommand(cmd CoreCommand, s *discordgo.Session, m *disc
 	var hex string
 	if strings.HasPrefix(inputString, "#") {
 		target = m.Author
-		hex = inputString
+		hex = inputString[1:]
 	} else {
 		target = c.Bot.GetCommandTarget(s, m, data, inputString)
 		color := s.State.UserColor(target.ID, m.ChannelID)
-		hex = fmt.Sprintf("#%x", color)
+		hex = fmt.Sprintf("%x", color)
 	}
 
 	complexResponse, err := c.handleHex(target, hex)
@@ -63,6 +63,24 @@ func (c *CoreModule) colorCommand(cmd CoreCommand, s *discordgo.Session, m *disc
 }
 
 func (c *CoreModule) handleHex(author *discordgo.User, hex string) (response *discordgo.MessageSend, err error) {
+	// Prepend 0s until the string is either 3 or 6 long (the input w accept)
+	// Necessary since Discord removes prepended 0s
+	for len(hex) != 3 && len(hex) < 6 {
+		hex = "0" + hex
+		println(hex)
+	}
+
+	// Support hex codes of length 3.
+	// Convert them to full length hex for Discord.
+	if len(hex) == 3 {
+		newHex := string(hex[0]) + string(hex[0])
+		newHex += string(hex[1]) + string(hex[1])
+		newHex += string(hex[2]) + string(hex[2])
+		hex = newHex
+	}
+
+	hex = "#" + hex
+
 	color, err := hexcolor.Parse(hex)
 	if err != nil {
 		return
