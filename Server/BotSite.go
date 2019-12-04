@@ -1,10 +1,11 @@
-package main
+package Server
 
 import (
 	"context"
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
+	"github.com/gendonl/genbot/Bot"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
@@ -13,29 +14,34 @@ import (
 )
 
 type HttpServer struct {
+	Bot *Bot.Bot
 }
 
 var res map[string]string
 
-func (h *HttpServer) start() {
+func New(bot *Bot.Bot) *HttpServer {
+	return &HttpServer{Bot: bot}
+}
+
+func (h *HttpServer) Start() {
 	var err error
 	res = make(map[string]string)
 
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 
 	var cur *mongo.Cursor
-	cur, err = serverCollection.Find(ctx, bson.M{})
+	cur, err = h.Bot.ServerCollection.Find(ctx, bson.M{})
 
 	if err != nil {
-		log.Error(err)
+		h.Bot.Log.Error(err)
 	}
 
 	// Fill the map will all known servers and their hashes
 	for cur.Next(ctx) {
-		var result ServerData
+		var result Bot.ServerData
 		err := cur.Decode(&result)
 		if err != nil {
-			log.Error(err)
+			h.Bot.Log.Error(err)
 		}
 
 		url := h.getPathFromID(result.ID)
@@ -51,16 +57,16 @@ func (h *HttpServer) getPathFromID(guildID string) string {
 	return b64[:5]
 }
 
-func (h *HttpServer) getUrlFromID(guildID string) string {
+func (h *HttpServer) GetUrlFromID(guildID string) string {
 	url := h.getPathFromID(guildID)
-	return fmt.Sprintf("%s/%s", BotConfig.WebsiteUrl, url)
+	return fmt.Sprintf("%s/%s", h.Bot.Config.WebsiteUrl, url)
 }
 
 // Convert the data of a server into a string
 func (h *HttpServer) getSite(guildID string) string {
 	var keys []string
 
-	data := getServerData(guildID)
+	data := h.Bot.ServerDataFromID(guildID)
 
 	for k := range data.CustomCommands {
 		keys = append(keys, k)
