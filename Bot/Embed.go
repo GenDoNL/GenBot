@@ -1,6 +1,4 @@
-//Embed ...
-
-package main
+package Bot
 
 //////////////////
 /// Credits to Necroforger (https://gist.github.com/Necroforger/8b0b70b1a69fa7828b8ad6387ebb3835)
