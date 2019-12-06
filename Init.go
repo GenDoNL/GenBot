@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	_ "flag"
 	"github.com/gendonl/genbot/AnimeModule"
 	"github.com/gendonl/genbot/Bot"
 	"github.com/gendonl/genbot/CoreModule"
