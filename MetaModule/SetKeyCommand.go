@@ -39,6 +39,8 @@ func (c *MetaModule) setKeyCommand(cmd MetaCommand, s *discordgo.Session, m *dis
 		return
 	}
 
-	s.MessageReactionAdd(m.ChannelID, m.ID, "✅")
-
+	err = s.MessageReactionAdd(m.ChannelID, m.ID, "✅")
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Successfully updated server key.")
+	}
 }

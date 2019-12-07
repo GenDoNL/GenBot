@@ -20,7 +20,7 @@ func initDelMeIrl() (cc CoreCommand) {
 
 func (c *CoreModule) delMeIrlCommand(cmd CoreCommand, s *discordgo.Session, m *discordgo.MessageCreate, data *Bot.ServerData) {
 	if len(m.Mentions) == 0 {
-		s.ChannelMessageSendEmbed(m.ChannelID, c.Bot.Usage(cmd, s, m, data).MessageEmbed)
+		_, _ = s.ChannelMessageSendEmbed(m.ChannelID, c.Bot.Usage(cmd, s, m, data).MessageEmbed)
 		return
 	}
 
@@ -28,14 +28,17 @@ func (c *CoreModule) delMeIrlCommand(cmd CoreCommand, s *discordgo.Session, m *d
 
 	deleted, err := c.Bot.DeleteMeIrl(data.ID, target)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Something went wrong while writing to the database, please try again later.")
+		_, _ = s.ChannelMessageSend(m.ChannelID, "Something went wrong while writing to the database, please try again later.")
 		return
 	}
 
 	if !deleted {
-		s.ChannelMessageSend(m.ChannelID, "No me_irl could be found for this user.")
+		_, _ = s.ChannelMessageSend(m.ChannelID, "No me_irl could be found for this user.")
 		return
 	}
 
-	s.MessageReactionAdd(m.ChannelID, m.ID, "✅")
+	err = s.MessageReactionAdd(m.ChannelID, m.ID, "✅")
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Successfully removed me_irl.")
+	}
 }

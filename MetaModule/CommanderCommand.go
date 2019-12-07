@@ -54,5 +54,7 @@ func (c *MetaModule) updateCommander(m *discordgo.MessageCreate, s *discordgo.Se
 		return
 	}
 
-	s.MessageReactionAdd(m.ChannelID, m.ID, "✅")
-}
+	err = s.MessageReactionAdd(m.ChannelID, m.ID, "✅")
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Successfully updated commander.")
+	}}

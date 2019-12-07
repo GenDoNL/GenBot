@@ -39,5 +39,8 @@ func (c *CoreModule) DeleteCommandCommand(cmd CoreCommand, s *discordgo.Session,
 		return
 	}
 
-	s.MessageReactionAdd(m.ChannelID, m.ID, "✅")
+	err = s.MessageReactionAdd(m.ChannelID, m.ID, "✅")
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Successfully removed command.")
+	}
 }

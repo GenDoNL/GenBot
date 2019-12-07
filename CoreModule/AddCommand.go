@@ -35,5 +35,8 @@ func (c *CoreModule) AddCommandCommand(cmd CoreCommand, s *discordgo.Session, m 
 		return
 	}
 
-	s.MessageReactionAdd(m.ChannelID, m.ID, "✅")
+	err = s.MessageReactionAdd(m.ChannelID, m.ID, "✅")
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Successfully added command.")
+	}
 }

@@ -58,5 +58,7 @@ func (c *MetaModule) updateCommand(m *discordgo.MessageCreate, s *discordgo.Sess
 		return
 	}
 
-	s.MessageReactionAdd(m.ChannelID, m.ID, "✅")
-}
+	err = s.MessageReactionAdd(m.ChannelID, m.ID, "✅")
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Successfully updated blocked command.")
+	}}
