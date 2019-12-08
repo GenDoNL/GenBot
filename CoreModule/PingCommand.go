@@ -24,12 +24,26 @@ func (c *CoreModule) pingCommand(cmd CoreCommand, s *discordgo.Session, m *disco
 	ping := s.HeartbeatLatency() / time.Millisecond
 
 	response := Bot.NewEmbed().
-		SetAuthorFromUser(m.Author).
 		SetColorFromUser(s, m.ChannelID, m.Author).
-		SetDescription(fmt.Sprintf("❤️ %dms", ping))
+		SetTitle("🏓 Pong").
+		SetDescription("Pinging...")
 
-	_, err := s.ChannelMessageSendEmbed(m.ChannelID, response.MessageEmbed)
+	// Benchmark round-trip time of sent message
+	start := time.Now()
+	msg, err := s.ChannelMessageSendEmbed(m.ChannelID, response.MessageEmbed)
+	elapsed := time.Since(start) / time.Millisecond
 
+	if err != nil {
+		c.Bot.Log.Error(err)
+		return
+	}
+
+	// Add the new data of the round-trip
+	response.SetDescription("").
+		AddInlineField("Bot", fmt.Sprintf("%dms", elapsed), true).
+		AddInlineField("API", fmt.Sprintf("%dms", ping), true)
+
+	_, err = s.ChannelMessageEditEmbed(msg.ChannelID, msg.ID, response.MessageEmbed)
 	if err != nil {
 		c.Bot.Log.Error(err)
 		return
