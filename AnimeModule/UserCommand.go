@@ -48,9 +48,31 @@ func (c *AnimeModule) AniUserInfoCommand(cmd AnimeCommand, s *discordgo.Session,
 		return
 	}
 
-	Description := fmt.Sprintf("**Anime Watched:** %d\n **Episodes Watched:** %d\n\n **Manga Read:** %d\n **Chapters Read:** %d\n",
+	query = "query ($userid: Int) { Activity(userId: $userid, sort: ID_DESC) " +
+		"{ ... on ListActivity { createdAt status progress media { type title { romaji } }  }  } } "
+	variables2 := struct {
+		Id int `json:"userid"`
+	}{
+		res.Id,
+	}
+
+	activity, err := a.Activity(query, variables2)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Unable to find user with this name.")
+		return
+	}
+
+	description := fmt.Sprintf("**Anime Watched:** %d\n **Episodes Watched:** %d\n\n **Manga Read:** %d\n **Chapters Read:** %d\n",
 		res.Statistics.Anime.Count, res.Statistics.Anime.EpisodesWatched,
 		res.Statistics.Manga.Count, res.Statistics.Manga.ChaptersRead)
+
+	if activity.Status == "completed" {
+		description = fmt.Sprintf("%s\n Recently completed the %s **%s**", description,
+			strings.ToLower(activity.Media.Type), activity.Media.Title.Romaji)
+	} else if activity.Status != "" {
+		description = fmt.Sprintf("%s\n Recently %s %s of **%s**", description, activity.Status, activity.Progress,
+			activity.Media.Title.Romaji)
+	}
 
 	e := Bot.NewEmbed().
 		SetColorFromUser(s, m.ChannelID, m.Author).
@@ -58,7 +80,8 @@ func (c *AnimeModule) AniUserInfoCommand(cmd AnimeCommand, s *discordgo.Session,
 		SetDescription(res.About).
 		SetThumbnail(res.Avatar.Large).
 		SetURL(res.SiteUrl).
-		SetDescription(Description)
+		SetDescription(description)
+
 
 	s.ChannelMessageSendEmbed(m.ChannelID, e.MessageEmbed)
 
