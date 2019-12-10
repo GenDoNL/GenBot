@@ -27,6 +27,7 @@ func New(bot *Bot.Bot) (c *AnimeModule) {
 	c.Commands = append(c.Commands, initMangaCommand())
 	c.Commands = append(c.Commands, initAnimeCommand())
 	c.Commands = append(c.Commands, initAniUserInfoCommand())
+	c.Commands = append(c.Commands, initAniRecentCommand())
 
 	return
 }

@@ -48,30 +48,14 @@ func (c *AnimeModule) AniUserInfoCommand(cmd AnimeCommand, s *discordgo.Session,
 		return
 	}
 
-	query = "query ($userid: Int) { Activity(userId: $userid, sort: ID_DESC) " +
-		"{ ... on ListActivity { createdAt status progress media { type title { romaji } }  }  } } "
-	variables2 := struct {
-		Id int `json:"userid"`
-	}{
-		res.Id,
-	}
-
-	activity, err := a.Activity(query, variables2)
-	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Unable to find user with this name.")
-		return
-	}
-
 	description := fmt.Sprintf("**Anime Watched:** %d\n **Episodes Watched:** %d\n\n **Manga Read:** %d\n **Chapters Read:** %d\n",
 		res.Statistics.Anime.Count, res.Statistics.Anime.EpisodesWatched,
 		res.Statistics.Manga.Count, res.Statistics.Manga.ChaptersRead)
 
-	if activity.Status == "completed" {
-		description = fmt.Sprintf("%s\n Recently completed the %s **%s**", description,
-			strings.ToLower(activity.Media.Type), activity.Media.Title.Romaji)
-	} else if activity.Status != "" {
-		description = fmt.Sprintf("%s\n Recently %s %s of **%s**", description, activity.Status, activity.Progress,
-			activity.Media.Title.Romaji)
+	recentStatus, err := c.getActivityData(res)
+
+	if err == nil {
+		description = fmt.Sprintf("%s\n%s", description, recentStatus)
 	}
 
 	e := Bot.NewEmbed().
@@ -82,7 +66,32 @@ func (c *AnimeModule) AniUserInfoCommand(cmd AnimeCommand, s *discordgo.Session,
 		SetURL(res.SiteUrl).
 		SetDescription(description)
 
-
 	s.ChannelMessageSendEmbed(m.ChannelID, e.MessageEmbed)
 
+}
+
+func (c *AnimeModule) getActivityData(usr anilistgo.User) (res string, err error) {
+	query := "query ($userid: Int) { Activity(userId: $userid, sort: ID_DESC) " +
+		"{ ... on ListActivity { createdAt status progress media { type title { romaji } }  }  } } "
+	variables2 := struct {
+		Id int `json:"userid"`
+	}{
+		usr.Id,
+	}
+
+	a, _ := anilistgo.New()
+	activity, err := a.Activity(query, variables2)
+	if err != nil {
+		return "", err
+	}
+
+	if activity.Status == "completed" {
+		res = fmt.Sprintf("Recently completed the %s **%s**",
+			strings.ToLower(activity.Media.Type), activity.Media.Title.Romaji)
+	} else if activity.Status != "" {
+		// TODO: Remove "of" on dropped anime
+		res = fmt.Sprintf("Recently %s %s of **%s**", activity.Status, activity.Progress,
+			activity.Media.Title.Romaji)
+	}
+	return
 }

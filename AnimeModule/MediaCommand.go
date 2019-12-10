@@ -60,7 +60,7 @@ func (c *AnimeModule) mediaCommand(cmd AnimeCommand, s *discordgo.Session, m *di
 
 	title := parseTitle(res)
 	description := parseDescription(res)
-	episodeChapters := chaptersOrEpisodes(mediaType, res)
+	episodeChapters := chaptersOrEpisodes(res)
 
 	e := Bot.NewEmbed().
 		SetColor(int(color)).
@@ -76,7 +76,7 @@ func (c *AnimeModule) mediaCommand(cmd AnimeCommand, s *discordgo.Session, m *di
 
 func queryBasicMediaInfo(name string, mediaType string) (res anilistgo.Media, err error) {
 	query := "query ($search: String, $type: MediaType) { Media (search: $search, type: $type) " +
-		"{ id description(asHtml: false) coverImage {large color} title { romaji native } status episodes chapters siteUrl averageScore} }"
+		"{ id description(asHtml: false) type coverImage {large color} title { romaji native } status episodes chapters siteUrl averageScore} }"
 	variables := struct {
 		Search string `json:"search"`
 		Type   string `json:"type"`
@@ -108,9 +108,9 @@ func parseDescription(res anilistgo.Media) string {
 	return description
 }
 
-func chaptersOrEpisodes(mediaType string, res anilistgo.Media) string {
+func chaptersOrEpisodes(res anilistgo.Media) string {
 	var episodeChapters string
-	if mediaType == "ANIME" {
+	if res.Type == "ANIME" {
 		if res.Episodes == 0 {
 			episodeChapters = fmt.Sprintf("Episodes: Unknown")
 		} else {
