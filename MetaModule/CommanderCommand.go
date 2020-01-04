@@ -47,7 +47,7 @@ func (c *MetaModule) updateCommander(m *discordgo.MessageCreate, s *discordgo.Se
 		return
 	}
 
-	err := c.Bot.UpdateCommander(data.ID, m.Mentions[0].ID, isCommander)
+	err := data.UpdateCommander(m.Mentions[0].ID, isCommander)
 
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Something went wrong while trying to update the key in the database, please try again later.")

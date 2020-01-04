@@ -32,7 +32,7 @@ func (c *MetaModule) setKeyCommand(cmd MetaCommand, s *discordgo.Session, m *dis
 		return
 	}
 
-	err := c.Bot.EditKey(data.ID, input[1])
+	err := data.EditKey(input[1])
 
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Something went wrong while trying to update the key in the database, please try again later.")

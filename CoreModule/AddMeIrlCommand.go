@@ -38,12 +38,12 @@ func (c *CoreModule) addMeIrlCommand(cmd CoreCommand, s *discordgo.Session, m *d
 	cmdName := strings.ToLower(nickname) + "_irl"
 	meIrl := Bot.MeIrlData{targetId, nickname, input[3]}
 
-	err = c.Bot.CreateCustomCommand(data.ID, cmdName, input[3])
+	err = data.CreateCustomCommand(cmdName, input[3])
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Something went wrong while writing to the database, please try again later.")
 		return
 	}
-	err = c.Bot.CreateMeIrl(data.ID, meIrl)
+	err = data.CreateMeIrl(meIrl)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Something went wrong while writing to the database, please try again later.")
 		return

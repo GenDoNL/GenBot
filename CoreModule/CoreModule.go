@@ -51,9 +51,6 @@ func (c *CoreModule) Execute(s *discordgo.Session, m *discordgo.MessageCreate, d
 		return
 	}
 
-	Log.Info("Test")
-
-
 	command, found := c.getCommand(cmdName[1:])
 	if !found {
 		c.executeCustom(s, m, data, cmdName[1:])

@@ -27,7 +27,7 @@ func (c *CoreModule) DeleteCommandCommand(cmd CoreCommand, s *discordgo.Session,
 		return
 	}
 
-	deleted, err := c.Bot.DeleteCustomCommand(data.ID, input[1])
+	deleted, err := data.DeleteCustomCommand(input[1])
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Something went wrong while delete the command from the database, please try again later.")
 		Log.Info(err)

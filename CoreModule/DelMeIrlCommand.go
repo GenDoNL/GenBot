@@ -26,7 +26,7 @@ func (c *CoreModule) delMeIrlCommand(cmd CoreCommand, s *discordgo.Session, m *d
 
 	target := m.Mentions[0].ID
 
-	deleted, err := c.Bot.DeleteMeIrl(data.ID, target)
+	deleted, err := data.DeleteMeIrl(target)
 	if err != nil {
 		_, _ = s.ChannelMessageSend(m.ChannelID, "Something went wrong while writing to the database, please try again later.")
 		return

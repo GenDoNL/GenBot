@@ -51,7 +51,7 @@ func (c *MetaModule) updateCommand(m *discordgo.MessageCreate, s *discordgo.Sess
 		return
 	}
 
-	err := c.Bot.UpdateBlockedCommand(data.ID, input[1], isBlocked)
+	err := data.UpdateBlockedCommand(input[1], isBlocked)
 
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Something went wrong while trying to update the key in the database, please try again later.")

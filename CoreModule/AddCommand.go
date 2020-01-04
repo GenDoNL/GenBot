@@ -27,7 +27,7 @@ func (c *CoreModule) AddCommandCommand(cmd CoreCommand, s *discordgo.Session, m 
 		return
 	}
 
-	err := c.Bot.CreateCustomCommand(data.ID, input[1], input[2])
+	err := data.CreateCustomCommand(input[1], input[2])
 
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Something went wrong while writing the command to the database, please try again later.")

@@ -59,11 +59,11 @@ func (b *Bot) ServerDataFromID(guildID string) *ServerData {
 		Log.Error(err)
 		// If not found, create new server.
 		data = newServerData(guildID)
-		b.WriteServerData(&data)
+		data.WriteToDB()
 	} else {
 		// Backwards compatibility, ensure no field is nil.
 		if validateData(&data) {
-			b.WriteServerData(&data)
+			data.WriteToDB()
 		}
 	}
 
@@ -112,7 +112,7 @@ func validateData(data *ServerData) (updateRequired bool){
 	return
 }
 
-func (b *Bot) WriteServerData(data *ServerData) (err error) {
+func (data *ServerData) WriteToDB() (err error) {
 	dataJson, err := bson.Marshal(data)
 
 	if err != nil {
@@ -140,7 +140,7 @@ func (b *Bot) WriteServerData(data *ServerData) (err error) {
 	return
 }
 
-func (b *Bot) updateData(serverId, index string, command interface{}) (err error) {
+func updateData(serverId, index string, command interface{}) (err error) {
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 	// remove $ from input to clean it
 	indexClean := strings.Replace(index, "$", "_", -1)
@@ -160,38 +160,38 @@ func (b *Bot) updateData(serverId, index string, command interface{}) (err error
 	return
 }
 
-func (b *Bot) CreateCustomCommand(serverId, commandName, content string) (err error) {
+func (data *ServerData)  CreateCustomCommand(commandName, content string) (err error) {
 	name := strings.ToLower(commandName)
 	command := CommandData{name, content}
 	commandClean := strings.Replace(commandName, ".", "_", -1)
 	index := fmt.Sprintf("commands.%s", commandClean)
-	return b.updateData(serverId, index, command)
+	return updateData(data.ID, index, command)
 }
 
-func (b *Bot) CreateMeIrl(serverId string, meIrl MeIrlData) (err error) {
+func (data *ServerData)  CreateMeIrl(meIrl MeIrlData) (err error) {
 	commandClean := strings.Replace(meIrl.UserID, ".", "_", -1)
 	index := fmt.Sprintf("me_irl.%s", commandClean)
-	return b.updateData(serverId, index, meIrl)
+	return updateData(data.ID, index, meIrl)
 }
 
-func (b *Bot) UpdateCommander(serverId string, userId string, isCommander bool) (err error) {
+func (data *ServerData)  UpdateCommander(userId string, isCommander bool) (err error) {
 	commandClean := strings.Replace(userId, ".", "_", -1)
 	index := fmt.Sprintf("commanders.%s", commandClean)
-	return b.updateData(serverId, index, isCommander)
+	return updateData(data.ID, index, isCommander)
 }
 
-func (b *Bot) UpdateBlockedCommand(serverId string, commandName string, isBlocked bool) (err error) {
+func (data *ServerData)  UpdateBlockedCommand(commandName string, isBlocked bool) (err error) {
 	commandClean := strings.Replace(commandName, ".", "_", -1)
 	index := fmt.Sprintf("blockedcommands.%s", commandClean)
-	return b.updateData(serverId, index, isBlocked)
+	return updateData(data.ID, index, isBlocked)
 }
 
-func (b *Bot) EditKey(serverId, key string) (err error) {
+func (data *ServerData) EditKey( key string) (err error) {
 	index := "Key"
-	return b.updateData(serverId, index, key)
+	return updateData(data.ID, index, key)
 }
 
-func (b *Bot) removeData(serverId, index, name string) (deleted bool, err error) {
+func removeData(serverId, index, name string) (deleted bool, err error) {
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 	// remove $ from input to clean it
 	indexClean := strings.Replace(index, "$", "_", -1)
@@ -215,14 +215,14 @@ func (b *Bot) removeData(serverId, index, name string) (deleted bool, err error)
 	return
 }
 
-func (b *Bot) DeleteCustomCommand(serverId, commandName string) (deleted bool, err error) {
+func (data *ServerData)  DeleteCustomCommand(commandName string) (deleted bool, err error) {
 	commandClean := strings.Replace(commandName, ".", "_", -1)
 	index := fmt.Sprintf("commands.%s", commandClean)
-	return b.removeData(serverId, index, commandName)
+	return removeData(data.ID, index, commandName)
 }
 
-func (b *Bot) DeleteMeIrl(serverId string, target string) (deleted bool, err error) {
+func (data *ServerData)  DeleteMeIrl(target string) (deleted bool, err error) {
 	commandClean := strings.Replace(target, ".", "_", -1)
 	index := fmt.Sprintf("me_irl.%s", commandClean)
-	return b.removeData(serverId, index, target)
+	return removeData(data.ID, index, target)
 }
