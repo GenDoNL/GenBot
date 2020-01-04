@@ -46,7 +46,7 @@ func (c *AnimeModule) AniRecentCommand(cmd AnimeCommand, s *discordgo.Session, m
 	res, err := a.User(query, variables)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Unable to find user with this name.")
-		c.Bot.Log.Error(err)
+		Log.Error(err)
 		return
 	}
 
@@ -54,7 +54,7 @@ func (c *AnimeModule) AniRecentCommand(cmd AnimeCommand, s *discordgo.Session, m
 	recentStatus, err := getActivityData(res)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Unable to find user with this name.")
-		c.Bot.Log.Error(err)
+		Log.Error(err)
 		return
 	}
 	media := recentStatus.Media

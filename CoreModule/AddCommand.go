@@ -31,7 +31,7 @@ func (c *CoreModule) AddCommandCommand(cmd CoreCommand, s *discordgo.Session, m 
 
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Something went wrong while writing the command to the database, please try again later.")
-		c.Bot.Log.Info(err)
+		Log.Info(err)
 		return
 	}
 

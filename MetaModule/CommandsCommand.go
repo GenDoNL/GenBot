@@ -40,7 +40,7 @@ func (c *MetaModule) commandsCommand(cmd MetaCommand, s *discordgo.Session, m *d
 
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Unable to send you a DM. A")
-		c.Bot.Log.Error(err)
+		Log.Error(err)
 		return
 	}
 
@@ -48,7 +48,7 @@ func (c *MetaModule) commandsCommand(cmd MetaCommand, s *discordgo.Session, m *d
 
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Unable to send you a DM. B")
-		c.Bot.Log.Error(err)
+		Log.Error(err)
 		return
 	}
 

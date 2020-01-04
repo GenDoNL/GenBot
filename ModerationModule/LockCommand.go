@@ -42,14 +42,14 @@ func (c *ModerationModule) lockCommand(cmd ModerationCommand, s *discordgo.Sessi
 	err = s.ChannelPermissionSet(ch.ID, c.Bot.BotID, "member", botPerm.Allow|0x800, botPerm.Deny&^0x800)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Unable to lock channel, do I have the permissions to manage roles?")
-		c.Bot.Log.Errorf("Error unlocking channel: %s", err)
+		Log.Errorf("Error unlocking channel: %s", err)
 		return
 	}
 
 	err = s.ChannelPermissionSet(ch.ID, everyonePerms.ID, everyonePerms.Type, everyonePerms.Allow&^0x800, everyonePerms.Deny|0x800)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Unable to lock channel, do I have the permissions to manage roles?")
-		c.Bot.Log.Errorf("Error unlocking channel: %s", err)
+		Log.Errorf("Error unlocking channel: %s", err)
 		return
 	}
 
@@ -68,7 +68,7 @@ func (c *ModerationModule) unlockCommand(cmd ModerationCommand, s *discordgo.Ses
 	err = s.ChannelPermissionSet(ch.ID, everyonePerms.ID, everyonePerms.Type, everyonePerms.Allow|0x800, everyonePerms.Deny&^0x800)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Unable to unlock channel, do I have the permissions to manage roles?")
-		c.Bot.Log.Errorf("Error unlocking channel: %s", err)
+		Log.Errorf("Error unlocking channel: %s", err)
 		return
 	}
 

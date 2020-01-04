@@ -6,7 +6,6 @@ import (
 	_ "github.com/lib/pq"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"io/ioutil"
-	"os"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -39,31 +38,17 @@ type Config struct {
 }
 
 type Bot struct {
-	Log        *logging.Logger
 	ConfigPath string
 	BotID      string
 	Config     Config
 	Modules    []Module
 	Server	   Server
+}
 
-	// DB
+var (
 	ServerCollection *mongo.Collection
-
-}
-
-func (b *Bot) initLogger() {
-	b.Log = logging.MustGetLogger("GenBot")
-	format := logging.MustStringFormatter(
-		`%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} %{id:03x}%{color:reset} %{message}`,
-	)
-
-	backEnd := logging.NewLogBackend(os.Stderr, "", 0)
-	backEndFormatter := logging.NewBackendFormatter(backEnd, format)
-
-	logging.SetBackend(backEndFormatter)
-
-	b.Log.Info("Logger initialized.")
-}
+	Log        *logging.Logger
+)
 
 func (b *Bot) startDataBase() {
 	var err error
@@ -72,19 +57,23 @@ func (b *Bot) startDataBase() {
 	mongoDB, err := mongo.Connect(ctx, options.Client().ApplyURI(b.Config.Mongo))
 
 	if err != nil {
-		b.Log.Fatal(err.Error())
+		Log.Fatal(err.Error())
 	}
 
-	b.ServerCollection = mongoDB.Database(b.Config.Database).Collection("servers")
-	b.Log.Info("Database initialized.")
+	ServerCollection = mongoDB.Database(b.Config.Database).Collection("servers")
+	Log.Info("Database initialized.")
 }
 
+func New(l *logging.Logger) (b *Bot) {
+	Log = l
+	b = &Bot{}
+	return
+}
 
 func (b *Bot) InitBot(m []Module, site Server, configPath string) {
 	b.Modules = m
 	b.ConfigPath = configPath
 	b.Server = site
-	b.initLogger()
 	b.readConfig()
 	b.startDataBase()
 
@@ -93,14 +82,14 @@ func (b *Bot) InitBot(m []Module, site Server, configPath string) {
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + b.Config.BotToken)
 	if err != nil {
-		b.Log.Critical("error creating Discord session,", err)
+		Log.Critical("error creating Discord session,", err)
 		return
 	}
 
 	// Get the account information.
 	u, err := dg.User("@me")
 	if err != nil {
-		b.Log.Critical("error obtaining account details,", err)
+		Log.Critical("error obtaining account details,", err)
 		return
 	}
 
@@ -112,11 +101,11 @@ func (b *Bot) InitBot(m []Module, site Server, configPath string) {
 	// Open the websocket and begin listening.
 	err = dg.Open()
 	if err != nil {
-		b.Log.Critical("error opening connection,", err)
+		Log.Critical("error opening connection,", err)
 		return
 	}
 
-	b.Log.Infof("Bot %s is now running.  Press CTRL-C to exit.", b.BotID)
+	Log.Infof("Bot %s is now running.  Press CTRL-C to exit.", b.BotID)
 	// Simple way to keep program running until CTRL-C is pressed.
 	<-make(chan struct{})
 	return
@@ -127,7 +116,7 @@ func (b *Bot) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Whatever happens, the bot should not go down when a single faulty message is received.
 	defer func() {
 		if r := recover(); r != nil {
-			b.Log.Criticalf("Bot panicked in channel %s on message: `%s`, %s", m.ChannelID, m.Content, r)
+			Log.Criticalf("Bot panicked in channel %s on message: `%s`, %s", m.ChannelID, m.Content, r)
 		}
 	}()
 
@@ -155,13 +144,13 @@ func (b *Bot) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 func (b *Bot) readConfig() {
 	raw, err := ioutil.ReadFile(b.ConfigPath)
 	if err != nil {
-		b.Log.Fatal(err.Error())
+		Log.Fatal(err.Error())
 	}
 
 	err = json.Unmarshal(raw, &b.Config)
 	if err != nil {
-		b.Log.Fatal(err.Error())
+		Log.Fatal(err.Error())
 	}
 
-	b.Log.Info("Config file loaded.")
+	Log.Info("Config file loaded.")
 }

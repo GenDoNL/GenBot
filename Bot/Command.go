@@ -33,7 +33,7 @@ func (b *Bot) CanExecute(cmd Command, s *discordgo.Session, m *discordgo.Message
 	isCommander, ok := data.Commanders[m.Author.ID]
 
 	if perm&cmd.Permission() != cmd.Permission() && !(ok && isCommander) {
-		b.Log.Infof("Use of %s command denied for permission level %d", cmd.Name(), perm)
+		Log.Infof("Use of %s command denied for permission level %d", cmd.Name(), perm)
 		return false
 	}
 	return true

@@ -26,7 +26,7 @@ func (c *CoreModule) weatherCommand(cmd CoreCommand, s *discordgo.Session, m *di
 	owm, err := openweathermap.NewCurrent("C", "EN", c.Bot.Config.OwmToken)
 
 	if err != nil {
-		c.Bot.Log.Error(err)
+		Log.Error(err)
 		return
 	}
 

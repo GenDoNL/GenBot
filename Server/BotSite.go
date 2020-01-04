@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/gendonl/genbot/Bot"
+	"github.com/op/go-logging"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
@@ -19,7 +20,12 @@ type HttpServer struct {
 
 var res map[string]string
 
-func New(bot *Bot.Bot) *HttpServer {
+var (
+	Log *logging.Logger
+)
+
+func New(bot *Bot.Bot, l *logging.Logger) *HttpServer {
+	Log = l
 	return &HttpServer{Bot: bot}
 }
 
@@ -30,10 +36,10 @@ func (h *HttpServer) Start() {
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 
 	var cur *mongo.Cursor
-	cur, err = h.Bot.ServerCollection.Find(ctx, bson.M{})
+	cur, err = Bot.ServerCollection.Find(ctx, bson.M{})
 
 	if err != nil {
-		h.Bot.Log.Error(err)
+		Log.Error(err)
 	}
 
 	// Fill the map will all known servers and their hashes
@@ -41,7 +47,7 @@ func (h *HttpServer) Start() {
 		var result Bot.ServerData
 		err := cur.Decode(&result)
 		if err != nil {
-			h.Bot.Log.Error(err)
+			Log.Error(err)
 		}
 
 		url := h.getPathFromID(result.ID)

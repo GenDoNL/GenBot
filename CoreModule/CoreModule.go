@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gendonl/genbot/Bot"
+	"github.com/op/go-logging"
 	"strings"
 )
 
@@ -20,9 +21,13 @@ type CoreCommand struct {
 	aliases     []string
 	execute     func(*CoreModule, CoreCommand, *discordgo.Session, *discordgo.MessageCreate, *Bot.ServerData)
 }
+var (
+	Log *logging.Logger
+)
 
-func New(bot *Bot.Bot) (c *CoreModule) {
+func New(bot *Bot.Bot, l *logging.Logger) (c *CoreModule) {
 	c = &CoreModule{Bot: bot}
+	Log = l
 
 	c.Commands = append(c.Commands, initPingCommand())
 	c.Commands = append(c.Commands, initAddCommandCommand())
@@ -46,6 +51,9 @@ func (c *CoreModule) Execute(s *discordgo.Session, m *discordgo.MessageCreate, d
 		return
 	}
 
+	Log.Info("Test")
+
+
 	command, found := c.getCommand(cmdName[1:])
 	if !found {
 		c.executeCustom(s, m, data, cmdName[1:])
@@ -56,13 +64,13 @@ func (c *CoreModule) Execute(s *discordgo.Session, m *discordgo.MessageCreate, d
 		return
 	}
 
-	c.Bot.Log.Infof("Executing command `%s` in server `%s` ", command.Name(), data.ID)
+	Log.Infof("Executing command `%s` in server `%s` ", command.Name(), data.ID)
 	command.execute(c, command, s, m, data)
 }
 
 func (c *CoreModule) executeCustom(s *discordgo.Session, m *discordgo.MessageCreate, data *Bot.ServerData, cmdName string) {
 	if cmd, ok := data.CustomCommands[cmdName]; ok {
-		c.Bot.Log.Infof("Executing custom command `%s` in server `%s` ", cmd.Name, data.ID)
+		Log.Infof("Executing custom command `%s` in server `%s` ", cmd.Name, data.ID)
 
 		s.ChannelMessageSend(m.ChannelID, cmd.Content)
 	}

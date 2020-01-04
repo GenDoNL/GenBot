@@ -66,7 +66,7 @@ func (c *CoreModule) sourceCommand(cmd CoreCommand, s *discordgo.Session, m *dis
 	sauceResult, err := sauceClient.FromURL(imageUrl)
 
 	if err != nil || len(sauceResult.Data) == 0 {
-		c.Bot.Log.Errorf("%s \n %s", err, sauceResult)
+		Log.Errorf("%s \n %s", err, sauceResult)
 		_, _ = s.ChannelMessageSend(m.ChannelID, "Something went wrong while contacting the SauceNAO API." +
 			"You could try sourcing your images manually at https://saucenao.com/")
 		return

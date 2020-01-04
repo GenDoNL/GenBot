@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gendonl/genbot/Bot"
+	"github.com/op/go-logging"
 	"strings"
 )
 
@@ -21,8 +22,13 @@ type ModerationCommand struct {
 	execute     func(*ModerationModule, ModerationCommand, *discordgo.Session, *discordgo.MessageCreate, *Bot.ServerData)
 }
 
-func New(bot *Bot.Bot) (c *ModerationModule) {
+var (
+	Log *logging.Logger
+)
+
+func New(bot *Bot.Bot, l *logging.Logger) (c *ModerationModule) {
 	c = &ModerationModule{Bot: bot}
+	Log = l
 
 	c.Commands = append(c.Commands, initPruneCommand())
 	c.Commands = append(c.Commands, initLockCommand())
@@ -46,7 +52,7 @@ func (c *ModerationModule) Execute(s *discordgo.Session, m *discordgo.MessageCre
 		return
 	}
 
-	c.Bot.Log.Infof("Executing command `%s` in server `%s` ", command.Name(), data.ID)
+	Log.Infof("Executing command `%s` in server `%s` ", command.Name(), data.ID)
 	command.execute(c, command, s, m, data)
 }
 

@@ -29,7 +29,7 @@ func (b *Bot) ParseMention(tag string) (res string, err error) {
 	}
 
 	res = match[1]
-	b.Log.Infof("Parsed %s to %s", tag, res)
+	Log.Infof("Parsed %s to %s", tag, res)
 	return
 }
 

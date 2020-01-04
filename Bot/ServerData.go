@@ -53,10 +53,10 @@ func (b *Bot) ServerDataFromID(guildID string) *ServerData {
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 
 	var data ServerData
-	err := b.ServerCollection.FindOne(ctx, filter).Decode(&data)
+	err := ServerCollection.FindOne(ctx, filter).Decode(&data)
 
 	if err != nil {
-		b.Log.Error(err)
+		Log.Error(err)
 		// If not found, create new server.
 		data = newServerData(guildID)
 		b.WriteServerData(&data)
@@ -116,26 +116,26 @@ func (b *Bot) WriteServerData(data *ServerData) (err error) {
 	dataJson, err := bson.Marshal(data)
 
 	if err != nil {
-		b.Log.Error(err)
+		Log.Error(err)
 		return err
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
-	res, err := b.ServerCollection.	ReplaceOne(
+	res, err := ServerCollection.	ReplaceOne(
 		ctx,
 		bson.M{"id": data.ID},
 		dataJson,
 		options.Replace().SetUpsert(true))
 
 	if err != nil {
-		b.Log.Error(err)
+		Log.Error(err)
 		return err
 	}
 
-	b.Log.Infof("Updated %d entries in database.", res.ModifiedCount)
+	Log.Infof("Updated %d entries in database.", res.ModifiedCount)
 
 	if res.UpsertedCount != 0 {
-		b.Log.Infof("Inserted new server %s into database.", data.ID)
+		Log.Infof("Inserted new server %s into database.", data.ID)
 	}
 	return
 }
@@ -145,7 +145,7 @@ func (b *Bot) updateData(serverId, index string, command interface{}) (err error
 	// remove $ from input to clean it
 	indexClean := strings.Replace(index, "$", "_", -1)
 
-	_, err = b.ServerCollection.UpdateOne(
+	_, err = ServerCollection.UpdateOne(
 		ctx,
 		bson.D{
 			{"id", serverId },
@@ -196,7 +196,7 @@ func (b *Bot) removeData(serverId, index, name string) (deleted bool, err error)
 	// remove $ from input to clean it
 	indexClean := strings.Replace(index, "$", "_", -1)
 
-	result, err := b.ServerCollection.UpdateOne(
+	result, err := ServerCollection.UpdateOne(
 		ctx,
 		bson.D{
 			{"id", serverId },

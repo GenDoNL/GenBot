@@ -50,14 +50,14 @@ func (c *CoreModule) colorCommand(cmd CoreCommand, s *discordgo.Session, m *disc
 	complexResponse, err := c.handleHex(target, hex)
 	if err != nil {
 		_, err = s.ChannelMessageSend(m.ChannelID, "Unable to parse color")
-		c.Bot.Log.Error(err)
+		Log.Error(err)
 		return
 	}
 
 	_, err = s.ChannelMessageSendComplex(m.ChannelID, complexResponse)
 
 	if err != nil {
-		c.Bot.Log.Error(err)
+		Log.Error(err)
 		return
 	}
 }

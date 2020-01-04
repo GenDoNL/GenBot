@@ -37,7 +37,7 @@ func (c *CoreModule) avatarCommand(cmd CoreCommand, s *discordgo.Session, m *dis
 	_, err := s.ChannelMessageSendEmbed(m.ChannelID, response.MessageEmbed)
 
 	if err != nil {
-		c.Bot.Log.Error(err)
+		Log.Error(err)
 		return
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gendonl/genbot/Bot"
+	"github.com/op/go-logging"
 	"strings"
 )
 
@@ -21,8 +22,13 @@ type AnimeCommand struct {
 	execute     func(*AnimeModule, AnimeCommand, *discordgo.Session, *discordgo.MessageCreate, *Bot.ServerData)
 }
 
-func New(bot *Bot.Bot) (c *AnimeModule) {
+var (
+	Log *logging.Logger
+)
+
+func New(bot *Bot.Bot, l *logging.Logger) (c *AnimeModule) {
 	c = &AnimeModule{Bot: bot}
+	Log = l
 
 	c.Commands = append(c.Commands, initMangaCommand())
 	c.Commands = append(c.Commands, initAnimeCommand())
@@ -47,7 +53,7 @@ func (c *AnimeModule) Execute(s *discordgo.Session, m *discordgo.MessageCreate, 
 		return
 	}
 
-	c.Bot.Log.Infof("Executing command `%s` in server `%s` ", command.Name(), data.ID)
+	Log.Infof("Executing command `%s` in server `%s` ", command.Name(), data.ID)
 	command.execute(c, command, s, m, data)
 }
 

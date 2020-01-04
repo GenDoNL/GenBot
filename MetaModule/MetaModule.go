@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/gendonl/genbot/Bot"
+	"github.com/op/go-logging"
 	"strings"
 )
 
@@ -21,8 +22,13 @@ type MetaCommand struct {
 	execute     func(*MetaModule, MetaCommand, *discordgo.Session, *discordgo.MessageCreate, *Bot.ServerData)
 }
 
-func New(bot *Bot.Bot) (c *MetaModule) {
+var (
+	Log *logging.Logger
+)
+
+func New(bot *Bot.Bot, l *logging.Logger) (c *MetaModule) {
 	c = &MetaModule{Bot: bot}
+	Log = l
 
 	c.Commands = append(c.Commands, initHelpCommand())
 	c.Commands = append(c.Commands, initCommandsCommand())
@@ -50,7 +56,7 @@ func (c *MetaModule) Execute(s *discordgo.Session, m *discordgo.MessageCreate, d
 		return
 	}
 
-	c.Bot.Log.Infof("Executing command `%s` in server `%s` ", command.Name(), data.ID)
+	Log.Infof("Executing command `%s` in server `%s` ", command.Name(), data.ID)
 	command.execute(c, command, s, m, data)
 }
 

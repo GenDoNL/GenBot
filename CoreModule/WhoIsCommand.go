@@ -67,7 +67,7 @@ func (c *CoreModule) whoIsCommand(cmd CoreCommand, s *discordgo.Session, m *disc
 	_, err = s.ChannelMessageSendEmbed(m.ChannelID, response.MessageEmbed)
 
 	if err != nil {
-		c.Bot.Log.Error(err)
+		Log.Error(err)
 		return
 	}
 }

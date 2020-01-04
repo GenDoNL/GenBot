@@ -34,7 +34,7 @@ func (c *CoreModule) pingCommand(cmd CoreCommand, s *discordgo.Session, m *disco
 	elapsed := time.Since(start) / time.Millisecond
 
 	if err != nil {
-		c.Bot.Log.Error(err)
+		Log.Error(err)
 		return
 	}
 
@@ -45,7 +45,7 @@ func (c *CoreModule) pingCommand(cmd CoreCommand, s *discordgo.Session, m *disco
 
 	_, err = s.ChannelMessageEditEmbed(msg.ChannelID, msg.ID, response.MessageEmbed)
 	if err != nil {
-		c.Bot.Log.Error(err)
+		Log.Error(err)
 		return
 	}
 }
