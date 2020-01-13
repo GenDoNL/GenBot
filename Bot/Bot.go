@@ -47,6 +47,7 @@ type Bot struct {
 
 var (
 	ServerCollection *mongo.Collection
+	UserCollection *mongo.Collection
 	Log        *logging.Logger
 )
 
@@ -58,9 +59,11 @@ func (b *Bot) startDataBase() {
 
 	if err != nil {
 		Log.Fatal(err.Error())
+		return // Redundant, necessary for static analysis.
 	}
 
 	ServerCollection = mongoDB.Database(b.Config.Database).Collection("servers")
+	UserCollection = mongoDB.Database(b.Config.Database).Collection("users")
 	Log.Info("Database initialized.")
 }
 

@@ -3,6 +3,7 @@ package AnimeModule
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	anilistgo "github.com/gendonl/anilist-go"
 	"github.com/gendonl/genbot/Bot"
 	"github.com/op/go-logging"
 	"strings"
@@ -34,6 +35,7 @@ func New(bot *Bot.Bot, l *logging.Logger) (c *AnimeModule) {
 	c.Commands = append(c.Commands, initAnimeCommand())
 	c.Commands = append(c.Commands, initAniUserInfoCommand())
 	c.Commands = append(c.Commands, initAniRecentCommand())
+	c.Commands = append(c.Commands, initSetUserCommand())
 
 	return
 }
@@ -113,5 +115,53 @@ func (cc AnimeCommand) Aliases() []string {
 	return cc.aliases
 }
 
+func (c *AnimeModule) getAniUserIDFromMessage(m *discordgo.MessageCreate, s *discordgo.Session) (int, bool) {
+	input := strings.SplitN(m.Content, " ", 2)
 
+	// 3 Cases: no input, @mention, command input
+	var userId int
+	// Case: get saved id from database for that user
+	if len(input) == 1 || len(m.Mentions) > 0 {
+		var aniUserId int
+		var errorMsg string
+		// No user was mentioned, this means author is the target
+		if len(input) == 1 {
+			aniUserId = c.Bot.UserDataFromID(m.Author.ID).AniListData.UserId
+			errorMsg = fmt.Sprintf("You have not yet linked an AniList user account, use `%saniset` to set one.", errorMsg)
+		} else { // User was mentioned, make this user the target.
+			aniUserId = c.Bot.UserDataFromID(m.Mentions[0].ID).AniListData.UserId
+			errorMsg = fmt.Sprintf("This user has not yet linked an AniList account, use `%saniset` to set one.", errorMsg)
+		}
+		if aniUserId == 0 {
+			// Case: Nothing set for this user
+			s.ChannelMessageSend(m.ChannelID, errorMsg)
+			return 0, true
+		}
+		userId = aniUserId
 
+	} else { // Case: Message provided username, get username from query.
+		userName := input[1]
+		aniUser, err := queryUser(userName)
+		if err != nil {
+			// Case: No match found
+			s.ChannelMessageSend(m.ChannelID, "Unable to find user with this name.")
+			return 0, true
+		}
+		userId = aniUser.Id
+	}
+	return userId, false
+}
+
+func queryUser(userName string) (res anilistgo.User, err error) {
+	query := "query ($search: String) { User (search: $search) " +
+		"{ id name avatar {large} siteUrl } }"
+	variables := struct {
+		Search string `json:"search"`
+	}{
+		userName,
+	}
+
+	a, _ := anilistgo.New()
+	res, err = a.User(query, variables)
+	return
+}

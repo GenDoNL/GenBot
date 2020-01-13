@@ -11,7 +11,7 @@ func initAvatarCommand() (cc CoreCommand) {
 		name:        "avatar",
 		description: "Sends the full-size version of the mentioned user's avatar, or the message author if no-one is mentioned.",
 		usage:       "`%savatar [user]`",
-		aliases:	 []string{"avatar", "av"},
+		aliases:	 []string{"av", "ava", "avat", "avata", "pfp", "pf"},
 		permission:  discordgo.PermissionSendMessages,
 		execute:     (*CoreModule).avatarCommand,
 	}

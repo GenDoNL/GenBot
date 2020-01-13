@@ -9,54 +9,41 @@ import (
 	"strings"
 )
 
-
-
 func initAniRecentCommand() (cc AnimeCommand) {
 	cc = AnimeCommand{
 		name:        "anirecent",
 		description: "Returns info on the most recent activity on the users AniList",
 		usage:       "`%sanirecent <name/id>`",
-		aliases:	 []string{"ar"},
+		aliases:	 []string{"ar", "arecent"},
 		permission:  discordgo.PermissionSendMessages,
 		execute:     (*AnimeModule).AniRecentCommand,
 	}
 	return
 }
 
+
 func (c *AnimeModule) AniRecentCommand(cmd AnimeCommand, s *discordgo.Session, m *discordgo.MessageCreate, data *Bot.ServerData) {
-	input := strings.SplitN(m.Content, " ", 2)
 
-	if len(input) < 2 {
-		result := c.Bot.Usage(cmd, s, m, data)
-		s.ChannelMessageSendEmbed(m.ChannelID, result.MessageEmbed)
+	// Get the AniID of the targeted user, if notFound it means that no match was found
+	userId, notFound := c.getAniUserIDFromMessage(m, s)
+	if notFound {
 		return
 	}
 
-	userName := input[1]
-
-	query := "query ($search: String) { User (search: $search) " +
-		"{ id } }"
-	variables := struct {
-		Search string `json:"search"`
-	}{
-		userName,
-	}
-
-	a, _ := anilistgo.New()
-	res, err := a.User(query, variables)
+	recentStatus, err := getActivityData(userId)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Unable to find user with this name.")
 		Log.Error(err)
 		return
 	}
 
+	e := createRecentActivityEmbed(recentStatus)
 
-	recentStatus, err := getActivityData(res)
-	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Unable to find user with this name.")
-		Log.Error(err)
-		return
-	}
+	s.ChannelMessageSendEmbed(m.ChannelID, e.MessageEmbed)
+
+}
+
+func createRecentActivityEmbed(recentStatus anilistgo.Activity) *Bot.Embed {
 	media := recentStatus.Media
 
 	color, _ := strconv.ParseInt(strings.Replace(media.CoverImage.Color, "#", "", -1), 16, 32)
@@ -65,15 +52,14 @@ func (c *AnimeModule) AniRecentCommand(cmd AnimeCommand, s *discordgo.Session, m
 	status := strings.Title(strings.ToLower(media.Status))
 	status = strings.Replace(status, "_", " ", -1)
 
-
 	title := parseTitle(media)
 
 	var description string
 	if recentStatus.Status == "completed" {
-		description = fmt.Sprintf("Recently completed.")
+		description = fmt.Sprintf("%s recently completed.", recentStatus.User.Name)
 	} else if recentStatus.Status != "" {
 		// TODO: Remove "of" on dropped anime
-		description = fmt.Sprintf("Recently %s %s", recentStatus.Status, recentStatus.Progress)
+		description = fmt.Sprintf("%s recently %s %s", recentStatus.User.Name, recentStatus.Status, recentStatus.Progress)
 	}
 
 	episodeChapters := chaptersOrEpisodes(media)
@@ -85,22 +71,21 @@ func (c *AnimeModule) AniRecentCommand(cmd AnimeCommand, s *discordgo.Session, m
 		SetURL(media.SiteUrl).
 		SetDescription(description).
 		SetFooter(fmt.Sprintf("Score: %s    Status: %s    Type: %s",
-			score, episodeChapters, strings.Title(strings.ToLower(media.Type))))
+			score, episodeChapters, strings.Title(strings.ToLower(media.Format))))
 
-	s.ChannelMessageSendEmbed(m.ChannelID, e.MessageEmbed)
-
+	return e
 }
 
-func getActivityData(usr anilistgo.User) (res anilistgo.Activity, err error) {
+func getActivityData(aniUserID int) (res anilistgo.Activity, err error) {
 	query := "query ($userid: Int) { Activity(userId: $userid, sort: ID_DESC) " +
-		"{ ... on ListActivity { createdAt status progress media { type " +
+		"{ ... on ListActivity { user { name } createdAt status progress media { type format" +
 		" coverImage {large color} title { romaji native } " +
 		"status episodes chapters siteUrl averageScore} } }  }  "
 
 	variables2 := struct {
 		Id int `json:"userid"`
 	}{
-		usr.Id,
+		aniUserID,
 	}
 
 	a, _ := anilistgo.New()

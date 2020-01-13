@@ -68,7 +68,8 @@ func (c *AnimeModule) mediaCommand(cmd AnimeCommand, s *discordgo.Session, m *di
 		SetTitle(title).
 		SetURL(res.SiteUrl).
 		SetDescription(description).
-		SetFooter(fmt.Sprintf("Score: %s    Status: %s    %s    Type: %s", score, status, episodeChapters, strings.Title(cmd.Name())))
+		SetFooter(fmt.Sprintf("Score: %s    Status: %s    %s    Type: %s",
+			score, status, episodeChapters, strings.Title(strings.ToLower(res.Format))))
 
 	s.ChannelMessageSendEmbed(m.ChannelID, e.MessageEmbed)
 
@@ -76,7 +77,7 @@ func (c *AnimeModule) mediaCommand(cmd AnimeCommand, s *discordgo.Session, m *di
 
 func queryBasicMediaInfo(name string, mediaType string) (res anilistgo.Media, err error) {
 	query := "query ($search: String, $type: MediaType) { Media (search: $search, type: $type) " +
-		"{ id description(asHtml: false) type coverImage {large color} title { romaji native } status episodes chapters siteUrl averageScore} }"
+		"{ id description(asHtml: false) type format coverImage {large color} title { romaji native } status episodes chapters siteUrl averageScore} }"
 	variables := struct {
 		Search string `json:"search"`
 		Type   string `json:"type"`

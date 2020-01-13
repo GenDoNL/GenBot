@@ -121,7 +121,7 @@ func (data *ServerData) WriteToDB() (err error) {
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
-	res, err := ServerCollection.	ReplaceOne(
+	res, err := ServerCollection.ReplaceOne(
 		ctx,
 		bson.M{"id": data.ID},
 		dataJson,
@@ -132,7 +132,7 @@ func (data *ServerData) WriteToDB() (err error) {
 		return err
 	}
 
-	Log.Infof("Updated %d entries in database.", res.ModifiedCount)
+	Log.Infof("Updated %d server entries in database.", res.ModifiedCount)
 
 	if res.UpsertedCount != 0 {
 		Log.Infof("Inserted new server %s into database.", data.ID)

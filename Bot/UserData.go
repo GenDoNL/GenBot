@@ -1,15 +1,84 @@
 package Bot
 
 import (
+	"context"
 	"errors"
 	"github.com/bwmarrin/discordgo"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"math"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
+type UserData struct {
+	UserId string `bson:"userid"`
+	AniListData AniListUserData `bson:"anilistdata"`
+}
+
+type AniListUserData struct {
+	UserId int `bson:"aniuserid"`
+	LastUpdated time.Time `bson:"lastupdated"`
+}
+
+func newUserData(userID string) UserData {
+	data := UserData{
+		UserId: userID,
+		AniListData: AniListUserData{},
+	}
+	return data
+}
+
+func (b *Bot) UserDataFromID(userID string) *UserData {
+	filter := bson.M{"userid": userID}
+	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+
+	var data UserData
+	err := UserCollection.FindOne(ctx, filter).Decode(&data)
+
+	if err != nil {
+		Log.Error(err)
+		data = newUserData(userID)
+	}
+
+	return &data
+}
+
+func (data *UserData) WriteToDB() (err error) {
+	dataJson, err := bson.Marshal(data)
+
+	if err != nil {
+		Log.Error(dataJson)
+		return
+	}
+
+	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	res, err :=  UserCollection.ReplaceOne(
+		ctx,
+		bson.M{"userid": data.UserId},
+		dataJson,
+		options.Replace().SetUpsert(true))
+
+	if err != nil {
+		Log.Error(err)
+		return err
+	}
+
+	Log.Infof("Updated %d user entries in database.", res.ModifiedCount)
+
+	if res.UpsertedCount != 0 {
+		Log.Infof("Inserted new user %s into database.", data.UserId)
+	}
+
+	return
+}
+
+
+
+//// discordgo.User helpers ////
 func (b *Bot) GetAccountCreationDate(user *discordgo.User) (timestamp int64) {
 	id, _ := strconv.ParseUint(user.ID, 10, 64)
 	timestamp = int64(((id >> 22) + 1420070400000) / 1000) // Divided by 1000 since we want seconds rather than ms
