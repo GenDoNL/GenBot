@@ -25,14 +25,15 @@ func initAniRecentCommand() (cc AnimeCommand) {
 func (c *AnimeModule) AniRecentCommand(cmd AnimeCommand, s *discordgo.Session, m *discordgo.MessageCreate, data *Bot.ServerData) {
 
 	// Get the AniID of the targeted user, if notFound it means that no match was found
-	userId, notFound := c.getAniUserIDFromMessage(m, s)
-	if notFound {
+	userId := c.getAniUserIDFromMessage(m)
+	if userId == 0 {
+		s.ChannelMessageSend(m.ChannelID, "Unable to find AniList account with this name.")
 		return
 	}
 
-	recentStatus, err := getActivityData(userId)
+	recentStatus, err := queryActivityData(userId)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Unable to find user with this name.")
+		s.ChannelMessageSend(m.ChannelID, "Unable to find AniList account with this name.")
 		Log.Error(err)
 		return
 	}
@@ -76,19 +77,3 @@ func createRecentActivityEmbed(recentStatus anilistgo.Activity) *Bot.Embed {
 	return e
 }
 
-func getActivityData(aniUserID int) (res anilistgo.Activity, err error) {
-	query := "query ($userid: Int) { Activity(userId: $userid, sort: ID_DESC) " +
-		"{ ... on ListActivity { user { name } createdAt status progress media { type format" +
-		" coverImage {large color} title { romaji native } " +
-		"status episodes chapters siteUrl averageScore} } }  }  "
-
-	variables2 := struct {
-		Id int `json:"userid"`
-	}{
-		aniUserID,
-	}
-
-	a, _ := anilistgo.New()
-	res, err = a.Activity(query, variables2)
-	return
-}

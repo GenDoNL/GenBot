@@ -11,7 +11,7 @@ import (
 func initSetUserCommand() (cc AnimeCommand) {
 	cc = AnimeCommand{
 		name:        "aniset",
-		description: "Links your discord account with an my anilist user.",
+		description: "Links your discord account with an AniList account.",
 		usage:       "`%saniset <name/id>`",
 		aliases:	 []string{},
 		permission:  discordgo.PermissionSendMessages,
@@ -29,9 +29,9 @@ func (c *AnimeModule) setUserCommand(cmd AnimeCommand, s *discordgo.Session, m *
 		return
 	}
 
-	user := c.Bot.UserDataFromID(m.Author.ID)
+	user := Bot.UserDataFromID(m.Author.ID)
 
-	aniUser, err := queryUser(input[1])
+	aniUser, err := queryBaseUser(input[1])
 
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Unable to find user with this name.")

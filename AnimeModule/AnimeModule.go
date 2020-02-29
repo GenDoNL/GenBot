@@ -115,53 +115,77 @@ func (cc AnimeCommand) Aliases() []string {
 	return cc.aliases
 }
 
-func (c *AnimeModule) getAniUserIDFromMessage(m *discordgo.MessageCreate, s *discordgo.Session) (int, bool) {
-	input := strings.SplitN(m.Content, " ", 2)
-
-	// 3 Cases: no input, @mention, command input
-	var userId int
-	// Case: get saved id from database for that user
-	if len(input) == 1 || len(m.Mentions) > 0 {
-		var aniUserId int
-		var errorMsg string
-		// No user was mentioned, this means author is the target
-		if len(input) == 1 {
-			aniUserId = c.Bot.UserDataFromID(m.Author.ID).AniListData.UserId
-			errorMsg = fmt.Sprintf("You have not yet linked an AniList user account, use `%saniset` to set one.", errorMsg)
-		} else { // User was mentioned, make this user the target.
-			aniUserId = c.Bot.UserDataFromID(m.Mentions[0].ID).AniListData.UserId
-			errorMsg = fmt.Sprintf("This user has not yet linked an AniList account, use `%saniset` to set one.", errorMsg)
-		}
-		if aniUserId == 0 {
-			// Case: Nothing set for this user
-			s.ChannelMessageSend(m.ChannelID, errorMsg)
-			return 0, true
-		}
-		userId = aniUserId
-
-	} else { // Case: Message provided username, get username from query.
-		userName := input[1]
-		aniUser, err := queryUser(userName)
-		if err != nil {
-			// Case: No match found
-			s.ChannelMessageSend(m.ChannelID, "Unable to find user with this name.")
-			return 0, true
-		}
-		userId = aniUser.Id
+func (c *AnimeModule) getAniUserIDFromMessage(m *discordgo.MessageCreate) (userId int) {
+	// Case: Check if we're able to get a user from the sent message.
+	userData := Bot.UserDataFromMessage(m)
+	if userData != nil {
+		return userData.AniListData.UserId
 	}
-	return userId, false
+
+	// Message provided username, get username from query.
+	input := strings.SplitN(m.Content, " ", 2)
+	userName := input[1]
+	aniUser, err := queryBaseUser(userName)
+	if err != nil {
+		// No match found
+		return 0
+	}
+	userId = aniUser.Id
+	return userId
 }
 
-func queryUser(userName string) (res anilistgo.User, err error) {
+func queryBaseUser(username string) (res anilistgo.User, err error) {
 	query := "query ($search: String) { User (search: $search) " +
 		"{ id name avatar {large} siteUrl } }"
 	variables := struct {
 		Search string `json:"search"`
 	}{
-		userName,
+		username,
 	}
 
 	a, _ := anilistgo.New()
 	res, err = a.User(query, variables)
+	return
+}
+
+
+func queryExtendedUser(username string, id int) (anilistgo.User, error) {
+	var query string
+	if id != 0 {
+		query = "query ($id: Int) { User (id: $id) "
+	} else {
+		query = "query ($search: String) { User (search: $search) "
+	}
+	query = query + "{ id name avatar {large}  statistics {" +
+		"anime {count episodesWatched} " +
+		"manga {count chaptersRead}} siteUrl } }"
+	variables := struct {
+		Search string `json:"search"`
+		Id int `json:"id"`
+	}{
+		username,
+		id,
+	}
+
+	a, _ := anilistgo.New()
+	res, err := a.User(query, variables)
+	return res, err
+}
+
+
+func queryActivityData(aniUserID int) (res anilistgo.Activity, err error) {
+	query := "query ($userid: Int) { Activity(userId: $userid, sort: ID_DESC) " +
+		"{ ... on ListActivity { user { name } createdAt status progress media { type format" +
+		" coverImage {large color} title { romaji native } " +
+		"status episodes chapters siteUrl averageScore} } }  }  "
+
+	variables2 := struct {
+		Id int `json:"userid"`
+	}{
+		aniUserID,
+	}
+
+	a, _ := anilistgo.New()
+	res, err = a.Activity(query, variables2)
 	return
 }

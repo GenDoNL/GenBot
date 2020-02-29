@@ -15,7 +15,7 @@ func initAniUserInfoCommand() (cc AnimeCommand) {
 		name:        "aniuser",
 		description: "Returns AniList information on the provided user",
 		usage:       "`%saniuser <name/id>`",
-		aliases:	 []string{"m"},
+		aliases:	 []string{"anilist"},
 		permission:  discordgo.PermissionSendMessages,
 		execute:     (*AnimeModule).AniUserInfoCommand,
 	}
@@ -25,24 +25,16 @@ func initAniUserInfoCommand() (cc AnimeCommand) {
 func (c *AnimeModule) AniUserInfoCommand(cmd AnimeCommand, s *discordgo.Session, m *discordgo.MessageCreate, data *Bot.ServerData) {
 	input := strings.SplitN(m.Content, " ", 2)
 
-	if len(input) < 2 {
-		result := c.Bot.Usage(cmd, s, m, data)
-		s.ChannelMessageSendEmbed(m.ChannelID, result.MessageEmbed)
-		return
+	userData := Bot.UserDataFromMessage(m)
+	var id int
+	var username string
+	if userData != nil {
+		id = userData.AniListData.UserId
+	} else {
+		username = input[1]
 	}
 
-	userName := input[1]
-
-	query := "query ($search: String) { User (search: $search) " +
-		"{ id name avatar {large}  statistics {anime {count episodesWatched} manga {count chaptersRead}} siteUrl } }"
-	variables := struct {
-		Search string `json:"search"`
-	}{
-		userName,
-	}
-
-	a, _ := anilistgo.New()
-	res, err := a.User(query, variables)
+	res, err := queryExtendedUser(username, id)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Unable to find user with this name.")
 		return
@@ -52,7 +44,8 @@ func (c *AnimeModule) AniUserInfoCommand(cmd AnimeCommand, s *discordgo.Session,
 		res.Statistics.Anime.Count, res.Statistics.Anime.EpisodesWatched,
 		res.Statistics.Manga.Count, res.Statistics.Manga.ChaptersRead)
 
-	recentStatus, err := c.getActivityData(res)
+	recentActivity, err := queryActivityData(res.Id)
+	recentStatus, err := parseActivityString(recentActivity)
 
 	if err == nil {
 		description = fmt.Sprintf("%s\n%s", description, recentStatus)
@@ -70,21 +63,9 @@ func (c *AnimeModule) AniUserInfoCommand(cmd AnimeCommand, s *discordgo.Session,
 
 }
 
-func (c *AnimeModule) getActivityData(usr anilistgo.User) (res string, err error) {
-	query := "query ($userid: Int) { Activity(userId: $userid, sort: ID_DESC) " +
-		"{ ... on ListActivity { createdAt status progress media { type title { romaji } }  }  } } "
-	variables2 := struct {
-		Id int `json:"userid"`
-	}{
-		usr.Id,
-	}
 
-	a, _ := anilistgo.New()
-	activity, err := a.Activity(query, variables2)
-	if err != nil {
-		return "", err
-	}
 
+func parseActivityString(activity anilistgo.Activity) (res string, err error) {
 	if activity.Status == "completed" {
 		res = fmt.Sprintf("Recently completed the %s **%s**",
 			strings.ToLower(activity.Media.Type), activity.Media.Title.Romaji)

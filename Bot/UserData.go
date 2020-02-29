@@ -32,7 +32,20 @@ func newUserData(userID string) UserData {
 	return data
 }
 
-func (b *Bot) UserDataFromID(userID string) *UserData {
+func UserDataFromMessage(m *discordgo.MessageCreate) (userData *UserData) {
+	input := strings.SplitN(m.Content, " ", 2)
+	if len(input) == 1 || len(m.Mentions) > 0 {
+		// No user was mentioned, this means author is the target
+		if len(input) == 1 {
+			userData = UserDataFromID(m.Author.ID)
+		} else { // User was mentioned, make this user the target.
+			userData = UserDataFromID(m.Mentions[0].ID)
+		}
+	}
+	return
+}
+
+func UserDataFromID(userID string) *UserData {
 	filter := bson.M{"userid": userID}
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 
