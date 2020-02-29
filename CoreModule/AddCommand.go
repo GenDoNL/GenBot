@@ -11,7 +11,7 @@ func initAddCommandCommand() (cc CoreCommand) {
 		name:        "addcommand",
 		description: "Adds a custom command to this server.",
 		usage:       "`%saddcommand <Command_Name> <Content>`",
-		aliases:	 []string{},
+		aliases:	 []string{"editcommand"},
 		permission:  discordgo.PermissionManageServer,
 		execute:     (*CoreModule).AddCommandCommand,
 	}
