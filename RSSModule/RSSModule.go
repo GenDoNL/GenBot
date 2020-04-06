@@ -44,7 +44,6 @@ func (c *RSSModule) Execute(s *discordgo.Session, m *discordgo.MessageCreate, da
 
 	command, found := c.getCommand(cmdName[1:])
 	if !found {
-		c.executeCustom(s, m, data, cmdName[1:])
 		return
 	}
 
@@ -54,14 +53,6 @@ func (c *RSSModule) Execute(s *discordgo.Session, m *discordgo.MessageCreate, da
 
 	Log.Infof("Executing command `%s` in server `%s` ", command.Name(), data.ID)
 	command.execute(c, command, s, m, data)
-}
-
-func (c *RSSModule) executeCustom(s *discordgo.Session, m *discordgo.MessageCreate, data *Bot.ServerData, cmdName string) {
-	if cmd, ok := data.CustomCommands[cmdName]; ok {
-		Log.Infof("Executing custom command `%s` in server `%s` ", cmd.Name, data.ID)
-
-		s.ChannelMessageSend(m.ChannelID, cmd.Content)
-	}
 }
 
 func (c *RSSModule) getCommand(cmdName string) (command RSSCommand, found bool) {
