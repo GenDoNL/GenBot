@@ -7,6 +7,7 @@ import (
 	"github.com/gendonl/genbot/CoreModule"
 	"github.com/gendonl/genbot/MetaModule"
 	"github.com/gendonl/genbot/ModerationModule"
+	"github.com/gendonl/genbot/RSSModule"
 	"github.com/gendonl/genbot/Server"
 	"github.com/op/go-logging"
 	"os"
@@ -42,6 +43,7 @@ func main() {
 		CoreModule.New(b, log),
 		ModerationModule.New(b, log),
 		AnimeModule.New(b, log),
+		RSSModule.New(b, log),
 	}
 	server := Server.New(b, log)
 	b.InitBot(modules, server, configPath)

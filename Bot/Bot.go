@@ -43,10 +43,12 @@ type Bot struct {
 	Config     Config
 	Modules    []Module
 	Server	   Server
+	Session    *discordgo.Session
 }
 
 var (
 	ServerCollection *mongo.Collection
+	RSSCollection *mongo.Collection
 	UserCollection *mongo.Collection
 	Log        *logging.Logger
 )
@@ -64,6 +66,8 @@ func (b *Bot) startDataBase() {
 
 	ServerCollection = mongoDB.Database(b.Config.Database).Collection("servers")
 	UserCollection = mongoDB.Database(b.Config.Database).Collection("users")
+	RSSCollection = mongoDB.Database(b.Config.Database).Collection("rss")
+
 	Log.Info("Database initialized.")
 }
 
@@ -97,10 +101,10 @@ func (b *Bot) InitBot(m []Module, site Server, configPath string) {
 	}
 
 	b.BotID = u.ID
+	b.Session = dg
 
 	// Register messageCreate as a callback for the messageCreate events.
 	dg.AddHandler(b.messageCreate)
-
 	// Open the websocket and begin listening.
 	err = dg.Open()
 	if err != nil {
