@@ -34,7 +34,6 @@ func (c *RSSModule) initPolling() {
 		// Lazy update once every 60 second
 		// If functionality is used more often, this has to be updated to reduce latency
 		time.Sleep(60 * time.Second)
-		break
 	}
 }
 
